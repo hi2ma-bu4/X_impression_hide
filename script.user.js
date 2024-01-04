@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.2.6
+// @version      1.2.7
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -226,13 +226,15 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             input: "checkbox",
         },
         maxHashtagCount: {
-            name: "1つの投稿内でのハッシュタグの使用上限数",
+            name: "ハッシュタグの上限数",
+            explanation: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
             data: MAX_HASHTAG_COUNT,
             input: "number",
             min: 1,
         },
         msgResemblance: {
             name: "文章類似度許可ライン",
+            explanation: `コピペ文章かを判別する為の基準値を指定します。`,
             data: MSG_RESEMBLANCE,
             input: "number",
             min: 0,
@@ -259,12 +261,16 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         },
         maxSaveLogSize: {
             name: "一時保存される投稿の最大数",
+            explanation: `比較用文章の保持数を指定します。
+値が小さいほど処理は軽くなりますが、検知率が減ります`,
             data: MAX_SAVE_LOG_SIZE,
             input: "number",
             min: 1,
         },
         bodyObsTimeout: {
             name: "ページ更新検知用処理待機時間(ms)",
+            explanation: `ページ更新を検知する際の検知の更新間隔を指定します。
+値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。`,
             data: BODY_OBS_TIMEOUT,
             input: "number",
             min: 100,
@@ -272,6 +278,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         },
         customCss: {
             name: "ページ適用css設定",
+            explanation: `ページへ適用するcssを指定します。`,
             data: CUSTOM_CSS,
             input: "textarea",
             advanced: true,
