@@ -4,6 +4,7 @@
 
 ### 前提条件
 PC専用です
+
 Chromium系ブラウザでの動作確認済み
 
 [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)が必要です。
