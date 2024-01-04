@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.2.5
+// @version      1.2.6
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -180,7 +180,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 #${EX_MENU_ID} input[type=checkbox] + span::after {
     content: "無効";
 }
-#${EX_MENU_ID} input[type=checkbox][checked] + span::after {
+#${EX_MENU_ID} input[type=checkbox]:checked + span::after {
     content: "有効";
 }
 
