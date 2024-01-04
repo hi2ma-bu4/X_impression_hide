@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.2.4
+// @version      1.2.5
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -888,7 +888,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             msgDB.shift();
         }
         msgDB.push(mesData);
-        console.log(msgDB.length);
+        log(msgDB.length);
     }
 
     function hideComment(mesData, reason, ch = true) {
