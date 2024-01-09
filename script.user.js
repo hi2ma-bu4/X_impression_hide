@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.5.2
+// @version             1.5.3
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -19,6 +19,7 @@
 // @updateURL           https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @downloadURL         https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @supportURL          https://github.com/hi2ma-bu4/X_impression_hide
+// @supportURL          https://greasyfork.org/ja/scripts/484303-twitter-旧-𝕏-のインプレッション小遣い稼ぎ野郎どもをdisplay-none-するやつ
 // @compatible          chrome
 // @compatible          edge
 // @grant               GM.addStyle
