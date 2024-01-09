@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.4.3
-// @description  名前の通りです。設定からカスタムできます。
+// @version      1.4.4
+// @description  Twitterのインプレゾンビを非表示にするツールです。使用方法・詳細は https://github.com/hi2ma-bu4/X_impression_hide/blob/main/README.md をご確認ください。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
 // @match        http://twitter.com/*
