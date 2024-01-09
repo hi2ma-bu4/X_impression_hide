@@ -44,11 +44,11 @@ and you can open it.
 |ページ適用css設定|ページへ適用するcssを指定します。|Omitted due to length|string|
 |設定のリセット|設定項目をリセットします|No value because it is a button||
 
-[^1]: 半角カタカナ、カタカナはひらがなに自動変換され、<br>全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます。
-[^2]: "!#"を行頭に記述するとコメントアウト扱いになります。
-[^3]: ここでの正規表現とは"/"の間部分の事を指します。
-[^4]: 投稿の文字数が最大値以下の場合、この値は使用されません。
-[^5]: [比較される最大テキストサイズ]より大きい場合、比較処理は実行されません。
+[^1]: Half-width katakana and katakana are automatically converted to hiragana,<br>full-width alphanumeric characters are automatically converted to half-width alphanumeric characters,<br> and line feed characters are automatically converted to half-width spaces.
+[^2]: If you write "!#" at the beginning of a line, it will be treated as a comment.
+[^3]: The regular expression here refers to the part between "/".
+[^4]: If your post's character count is less than or equal to the maximum value, this value will not be used.
+[^5]: If it is larger than [比較対象の最大文字サイズ], the comparison process will not be performed.
 
 
 ### If there is a configuration mistake or a configuration update misalignment due to a version upgrade.
@@ -63,11 +63,11 @@ First, go to the page below.
 > }
 > ```
 
-ストレージの欄に含まれている以下の記述を削除してください
+Please delete the following description in the storage field.
 > [!CAUTION]
 > All set CSS data will be reset!
 ```
-,\"customCss\":\" ---ユーザーによって異なる為省略--- \"
+,\"customCss\":\" ---Omitted as it varies depending on the user--- \"
 ```
 
 If you do not understand or the problem is not resolved, please change the description below.
