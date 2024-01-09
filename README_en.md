@@ -31,24 +31,26 @@ and you can open it.
 |:---|:---|:---:|:---:|
 |Show hidden logs|It will remove the hidden logs from the screen.<br>The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.|true|boolean|
 |Prohibited expressions|Specify the text to hide[^1][^2].<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
-|許可する言語|許可する言語を指定します。<br>記述方法は正規表現[^3]で記述します。|Omitted due to length|string|
-|自身の引用禁止|自身を引用ツイートする投稿を非表示にします。|true|boolean|
-|認証アカウント禁止|認証済アカウントを無差別にブロックします。|false|boolean|
-|認証アカウントのみ判定|認証済アカウントのみを検知の対象にします。<br>通常アカウントや認証マークの無いアカウントはブロックされなくなります。|false|boolean|
-|ハッシュタグの上限数|1つの投稿内でのハッシュタグの使用上限数を指定します。|6|int (1~)|
-|文章類似度許可ライン|コピペ文章かを判別する為の基準値を指定します。|0.8|float (0~1)|
-|比較される最大テキストサイズ|コピペ投稿の文章比較の最大文字数を指定します[^4]。<br>値を大きくするほど誤検知率は減り、検知率も減ります。|80|int (0~)|
-|一時保存・比較される最小テキストサイズ|比較用文章の最小文字数を指定します[^5]。<br>値が大きくするほど誤検知率は減り、検知率も減ります。|8|int (0~)|
-|一時保存される投稿の最大数|比較用文章の保持数を指定します。<br>値が小さいほど処理は軽くなりますが、検知率が減ります。|100|int (1~)|
-|ページ更新検知用処理待機時間(ms)|ページ更新を検知する際の検知の更新間隔を指定します。<br>値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。|3000|int (100~)|
-|ページ適用css設定|ページへ適用するcssを指定します。|Omitted due to length|string|
-|設定のリセット|設定項目をリセットします|No value because it is a button||
+|Allowed languages|Specify the allowed languages.<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
+|Prohibition of self-quotation|It hides posts that quote oneself.|true|boolean|
+|Prohibition of authenticated accounts|It indiscriminately hides authenticated accounts.|false|boolean|
+|Authenticate accounts only|It detects only authenticated accounts.<br>Regular accounts and accounts without verification badges will no longer be blocked.|false|boolean|
+|Maximum number of hashtags|It specifies the maximum number of hashtags allowed in a single post.|6|int (1~)|
+|Text similarity threshold|It specifies the threshold value for determining whether a text is a copied and pasted text.|0.8|float (0~1)|
+|Maximum text size for comparison|It specifies the maximum number of characters for text comparison in copied and pasted posts.[^4].<br>Increasing the value reduces the false positive rate but also reduces the detection rate.|80|int (0~)|
+|The minimum text size that is temporarily saved and compared|This specifies the minimum number of characters for the comparison text[^5].<br>
+Increasing the value reduces the false detection rate as well as the detection rate.|8|int (0~)|
+|The maximum number of posts that are temporarily saved|This specifies the number of comparison texts to be retained.<br>A smaller value reduces the processing load but also decreases the detection rate.|100|int (1~)|
+|Language|Set the display language.|ja|str (ja\|en)|
+|Processing wait time (in milliseconds) for page update detection|This specifies the interval for detecting page updates.<br>A larger value reduces the processing load but may potentially delay the initial speed of hiding.|3000|int (100~)|
+|Page-specific CSS settings|Specify the CSS to apply to the page.|Omitted due to length|string|
+|Reset settings|Reset the settings.|No value because it is a button||
 
 [^1]: Half-width katakana and katakana are automatically converted to hiragana,<br>full-width alphanumeric characters are automatically converted to half-width alphanumeric characters,<br> and line feed characters are automatically converted to half-width spaces.
 [^2]: If you write "!#" at the beginning of a line, it will be treated as a comment.
 [^3]: The regular expression here refers to the part between "/".
 [^4]: If your post's character count is less than or equal to the maximum value, this value will not be used.
-[^5]: If it is larger than [比較対象の最大文字サイズ], the comparison process will not be performed.
+[^5]: If it is larger than [Maximum text size for comparison], the comparison process will not be performed.
 
 
 ### If there is a configuration mistake or a configuration update misalignment due to a version upgrade.

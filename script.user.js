@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.5.1
+// @version             1.5.2
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -343,7 +343,7 @@ Regular accounts and accounts without verification badges will no longer be bloc
             },
             explanation: {
                 ja: `コピペ文章かを判別する為の基準値を指定します。`,
-                en: `"It specifies the threshold value for determining whether a text is a copied and pasted text.`,
+                en: `It specifies the threshold value for determining whether a text is a copied and pasted text.`,
             },
             data: MSG_RESEMBLANCE,
             _data: MSG_RESEMBLANCE,
@@ -381,7 +381,7 @@ Increasing the value reduces the false positive rate but also reduces the detect
 ([比較される最大テキストサイズ]より大きい場合、比較処理は実行されません)`,
                 en: `This specifies the minimum number of characters for the comparison text.
 Increasing the value reduces the false detection rate as well as the detection rate.
-If it is larger than the [maximum text size for comparison], the comparison process will not be executed.`,
+If it is larger than the [Maximum text size for comparison], the comparison process will not be executed.`,
             },
             data: MIN_SAVE_TEXT_SIZE,
             _data: MIN_SAVE_TEXT_SIZE,
@@ -455,7 +455,7 @@ A larger value reduces the processing load but may potentially delay the initial
         resetSetting: {
             name: {
                 ja: "設定のリセット",
-                en: "Reset settings.",
+                en: "Reset settings",
             },
             explanation: {
                 ja: `設定項目をリセットします。
