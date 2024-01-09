@@ -3,10 +3,10 @@
 // @name:ja         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @name:en         Hide the Twitter (formerly: 𝕏) impression-earning scammers with "display:none;"
 // @namespace       https://snowshome.page.link/p
-// @version         1.4.7
-// @description     Twitterのインプレゾンビを非表示にするツールです。使用方法・詳細は https://github.com/hi2ma-bu4/X_impression_hide/blob/main/README.md をご確認ください。
-// @description:ja  Twitterのインプレゾンビを非表示にするツールです。使用方法・詳細は https://github.com/hi2ma-bu4/X_impression_hide/blob/main/README.md をご確認ください。
-// @description:en  This is a tool to hide Twitter impression zombies. For usage instructions and more details, please refer to https://github.com/hi2ma-bu4/X_impression_hide/blob/main/README.md .
+// @version         1.4.8
+// @description     Twitterのインプレゾンビを非表示にするツールです。
+// @description:ja  Twitterのインプレゾンビを非表示にするツールです。
+// @description:en  This is a tool to hide Twitter impression zombies.
 // @author          tromtub(snows)
 // @license         You can modify as long as you credit me
 // @match           https://twitter.com/*
