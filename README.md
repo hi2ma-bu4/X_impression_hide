@@ -11,6 +11,11 @@
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)が必要です。
 
+### 効果
+![before](image/before.png)
+
+![after1](image/after1.png)![after2](image/after2.png)
+
 ### 使い方
 Tampermonkeyに追加するだけで使用できます。
 
