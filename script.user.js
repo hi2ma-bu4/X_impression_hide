@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.2.10
+// @version      1.2.11
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -70,7 +70,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
 !# プロフィールメッセージを異常に推してる人
-こんにち[はわ].*?ぷろふ
+(はじめまして|こんにち[はわ]).*?ぷろふ
+
+!# chatGPTが時々やらかす濁点半濁点問題を流用
+[\\u3099\\u309a]
 
 !# chatGPTのエラーメッセージを取り敢えず対処
 ^申し訳ありません.*?(過激な表現や性的な内容|不適切なコンテンツや言葉).*?他の(質問や話題|トピックで質問)があれば.*?。$
