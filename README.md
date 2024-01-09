@@ -2,6 +2,8 @@
 
 <sub>略して「インプレゾンビをnoneするやつ」</sub>
 
+[English README is here](README_en.md)
+
 ### 前提条件
 > [!WARNING]
 > PC専用です
