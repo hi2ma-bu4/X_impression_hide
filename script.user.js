@@ -204,6 +204,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             explanation: `非表示にしたログを画面から消します。
 画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。`,
             data: VISIBLE_LOG,
+            _data: VISIBLE_LOG,
             input: "checkbox",
         },
         blackTextReg: {
@@ -213,6 +214,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 (半角カタカナ、カタカナはひらがなに自動変換されます)
 (全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます)`,
             data: BLACK_TEXT_REG,
+            _data: BLACK_TEXT_REG,
             input: "textarea",
         },
         allowLang: {
@@ -220,18 +222,21 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             explanation: `許可する言語を指定します。
 記述方法は正規表現(/の間部分)で記述します。`,
             data: ALLOW_LANG,
+            _data: ALLOW_LANG,
             input: "text",
         },
         oneselfRetweetBlock: {
             name: "自身の引用禁止",
             explanation: `自身を引用ツイートする投稿を非表示にします。`,
             data: ONESELF_RETWEET_BLOCK,
+            _data: ONESELF_RETWEET_BLOCK,
             input: "checkbox",
         },
         maxHashtagCount: {
             name: "ハッシュタグの上限数",
             explanation: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
             data: MAX_HASHTAG_COUNT,
+            _data: MAX_HASHTAG_COUNT,
             input: "number",
             min: 1,
         },
@@ -239,6 +244,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             name: "文章類似度許可ライン",
             explanation: `コピペ文章かを判別する為の基準値を指定します。`,
             data: MSG_RESEMBLANCE,
+            _data: MSG_RESEMBLANCE,
             input: "number",
             min: 0,
             max: 1,
@@ -250,6 +256,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 値を大きくするほど誤検知率は減り、検知率も減ります。
 (投稿の文字数が最大値以下の場合、この値は使用されません)`,
             data: MAX_SAVE_TEXT_SIZE,
+            _data: MAX_SAVE_TEXT_SIZE,
             input: "number",
             min: 0,
         },
@@ -259,6 +266,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 値が大きくするほど誤検知率は減り、検知率も減ります。
 ([比較される最大テキストサイズ]より大きい場合、比較処理は実行されません)`,
             data: MIN_SAVE_TEXT_SIZE,
+            _data: MIN_SAVE_TEXT_SIZE,
             input: "number",
             min: 0,
         },
@@ -267,6 +275,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             explanation: `比較用文章の保持数を指定します。
 値が小さいほど処理は軽くなりますが、検知率が減ります`,
             data: MAX_SAVE_LOG_SIZE,
+            _data: MAX_SAVE_LOG_SIZE,
             input: "number",
             min: 1,
         },
@@ -275,6 +284,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             explanation: `ページ更新を検知する際の検知の更新間隔を指定します。
 値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。`,
             data: BODY_OBS_TIMEOUT,
+            _data: BODY_OBS_TIMEOUT,
             input: "number",
             min: 100,
             advanced: true,
@@ -283,6 +293,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             name: "ページ適用css設定",
             explanation: `ページへ適用するcssを指定します。`,
             data: CUSTOM_CSS,
+            _data: CUSTOM_CSS,
             input: "textarea",
             advanced: true,
         },
@@ -1012,7 +1023,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         let dic = {};
         for (let key in SETTING_LIST) {
             let d = SETTING_LIST[key]?.data;
-            if (d != null) {
+            let _d = SETTING_LIST[key]?._data;
+            if (d != null && d != _d) {
                 dic[key] = d;
             }
         }
