@@ -2,15 +2,15 @@
 // @name                Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @name:ja             Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @name:en             Hide the Twitter (formerly: 𝕏) impression-earning scammers with "display:none;"
-// @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
+// @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.4.9
+// @version             1.4.10
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
-// @description:zh-TW   這是一個可以隱藏 Twitter 垃圾訊息的工具。
 // @description:zh-CN   这是一个可以隐藏 Twitter 垃圾信息的工具。
+// @description:zh-TW   這是一個可以隱藏 Twitter 垃圾訊息的工具。
 // @author              tromtub(snows)
 // @license             You can modify as long as you credit me
 // @match               https://twitter.com/*
