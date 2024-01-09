@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.3.1
+// @version      1.3.2
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -198,6 +198,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 .${EX_MENU_ITEM_BASE_ID}_name + p {
     font-size: .8em;
     margin: 0 4px;
+}
+
+.${EX_MENU_ID} details {
+    margin-top: 1em;
 }
 `;
 
