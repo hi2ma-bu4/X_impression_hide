@@ -40,7 +40,7 @@ and you can open it.
 |Maximum text size for comparison|It specifies the maximum number of characters for text comparison in copied and pasted posts.[^4].<br>Increasing the value reduces the false positive rate but also reduces the detection rate.|80|int (0~)|
 |The minimum text size that is temporarily saved and compared|This specifies the minimum number of characters for the comparison text[^5].<br>Increasing the value reduces the false detection rate as well as the detection rate.|8|int (0~)|
 |The maximum number of posts that are temporarily saved|This specifies the number of comparison texts to be retained.<br>A smaller value reduces the processing load but also decreases the detection rate.|100|int (1~)|
-|Language|Set the display language.|ja|str (ja\|en)|
+|Language|Set the display language.|ja|string (ja\|en)|
 |Processing wait time (in milliseconds) for page update detection|This specifies the interval for detecting page updates.<br>A larger value reduces the processing load but may potentially delay the initial speed of hiding.|3000|int (100~)|
 |Page-specific CSS settings|Specify the CSS to apply to the page.|Omitted due to length|string|
 |Reset settings|Reset the settings.|No value because it is a button||
