@@ -24,9 +24,9 @@ The setting is
 or
 > Extensions Menu in the Upper Right Corner > Tampermonkey > Hide the Twitter... > 設定を開く(s)
 
-で、開く事ができます。
+and you can open it.
 
-### 設定の内容
+### Setting details
 |name|explanation|initial value|type,extent|
 |:---|:---|:---:|:---:|
 |非表示ログを表示|非表示にしたログを画面から消します。<br>画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。|true|boolean|
@@ -51,12 +51,12 @@ or
 [^5]: [比較される最大テキストサイズ]より大きい場合、比較処理は実行されません。
 
 
-### 設定ミス、バージョンアップによる設定更新ずれが発生した場合
-まず、以下のページまで移動します。
-> 右上拡張機能一覧 > ダッシュボード > インストール済UserScript > Twitter(旧:𝕏)の(略) > ストレージ
+### If there is a configuration mistake or a configuration update misalignment due to a version upgrade.
+First, go to the page below.
+> Extensions Menu in the Upper Right Corner > Dashboard > Installed UserScript > Hide the Twitter... > Storage
 
 > [!TIP]
-> ストレージの欄の例
+> Example of storage column
 > ```json
 > {
 >   "X_impression_hide_json": "{\"visibleLog\":true, ..."
@@ -65,14 +65,14 @@ or
 
 ストレージの欄に含まれている以下の記述を削除してください
 > [!CAUTION]
-> 設定されているCSSデータが全てリセットされます！
+> All set CSS data will be reset!
 ```
 ,\"customCss\":\" ---ユーザーによって異なる為省略--- \"
 ```
 
-わからない・問題が解決しなかった場合は以下の記述に変更してください。<br>
+If you do not understand or the problem is not resolved, please change the description below.
 > [!CAUTION]
-> 設定されているデータが全てリセットされます！
+> All set data will be reset!
 
 ```json
 {
