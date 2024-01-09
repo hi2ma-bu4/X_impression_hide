@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.2.11
+// @version      1.3.1
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -307,6 +307,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 <span style="color: #f00">実行すると設定は復元出来ません！！！</span>`,
             value: "リセットする",
             input: "button",
+            advanced: true,
         },
     };
 
@@ -473,6 +474,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         let w_exMenuDOM = document.createElement("div");
         w_exMenuDOM.innerHTML = /* html */ `
 <small style="color:#d00">変更の保存をした場合、ページを更新してください。</small>`;
+        let advanceDOM = document.createElement("details");
+        advanceDOM.innerHTML = /* html */ `
+<summary>高度な設定</summary>`;
         for (let key in SETTING_LIST) {
             let item = SETTING_LIST[key];
             // 入力欄作成
@@ -536,8 +540,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             if (add_elem) {
                 div.appendChild(add_elem);
             }
-            w_exMenuDOM.appendChild(div);
+            if (item.advanced) {
+                advanceDOM.appendChild(div);
+            }
+            else {
+                w_exMenuDOM.appendChild(div);
+            }
         }
+        w_exMenuDOM.appendChild(advanceDOM);
         // 画面右下のボタン系
         {
             let div = document.createElement("div");
