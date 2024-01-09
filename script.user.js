@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 // @namespace    https://snowshome.page.link/p
-// @version      1.3.3
+// @version      1.4.1
 // @description  名前の通りです。設定からカスタムできます。
 // @author       tromtub(snows)
 // @match        https://twitter.com/*
@@ -41,7 +41,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・誤検知を減らす(今はまだいい？)
 ・クイックミュートボタンを作成
 ・クイックブロックボタンを作成
-・認証マークを全ブロック機能
 ・whitelist_filterの実装
     ・名前
     ・内容
@@ -66,6 +65,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     // 初期値(定数)
     const VISIBLE_LOG = true;
     const ONESELF_RETWEET_BLOCK = true;
+    const VERIFY_BLOCK = false;
+    const VERIFY_ONRY_FILTER = false;
 
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
@@ -237,6 +238,21 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             explanation: `自身を引用ツイートする投稿を非表示にします。`,
             data: ONESELF_RETWEET_BLOCK,
             _data: ONESELF_RETWEET_BLOCK,
+            input: "checkbox",
+        },
+        verifyBlock: {
+            name: "認証アカウント禁止",
+            explanation: `認証済アカウントを無差別にブロックします。`,
+            data: VERIFY_BLOCK,
+            _data: VERIFY_BLOCK,
+            input: "checkbox",
+        },
+        verifyOnryFilter: {
+            name: "認証アカウントのみ判定",
+            explanation: `認証済アカウントのみを検知の対象にします。
+通常アカウントや認証マークの無いアカウントはブロックされなくなります。`,
+            data: VERIFY_ONRY_FILTER,
+            _data: VERIFY_ONRY_FILTER,
             input: "checkbox",
         },
         maxHashtagCount: {
@@ -790,11 +806,21 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         //log(messageData);
         // 投稿主保護
         if (messageData.id == parent_id) {
+            addDB(messageData);
+            return;
+        }
+        if (SETTING_LIST.verifyOnryFilter && messageData.verify) {
+            addDB(messageData);
             return;
         }
         // blacklist_id比較
         if (blacklist_id.has(messageData.id)) {
             hideComment(messageData, "他で検出済");
+            return;
+        }
+        // 認証済アカウント強制ブロック
+        if (SETTING_LIST.verifyBlock.data && messageData.verify) {
+            hideComment(messageData, "認証垢");
             return;
         }
         // 投稿言語の制限
@@ -812,11 +838,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
                 return;
             case 0:
                 // 問題なし
-
-                // 短いと誤爆するため
-                if (messageData.str_len >= SETTING_LIST.minSaveTextSize.data) {
-                    addDB(messageData);
-                }
+                addDB(messageData);
                 return;
             case 1:
                 // フィルターに反応
@@ -921,6 +943,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     }
 
     function addDB(mesData) {
+        // 短いと誤爆するため
+        if (messageData.str_len < SETTING_LIST.minSaveTextSize.data) {
+            return;
+        }
         msgDB_id.add(mesData.id);
         if (msgDB.length > SETTING_LIST.maxSaveLogSize.data) {
             msgDB.shift();
