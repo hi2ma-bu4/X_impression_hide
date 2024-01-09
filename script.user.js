@@ -19,8 +19,8 @@
 // @updateURL           https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @downloadURL         https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @supportURL          https://github.com/hi2ma-bu4/X_impression_hide
-// @compatible          chrome 動作確認済
-// @compatible          edge 動作確認済
+// @compatible          chrome
+// @compatible          edge
 // @grant               GM.addStyle
 // @grant               GM_setValue
 // @grant               GM_getValue
