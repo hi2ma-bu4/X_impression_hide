@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.4.11
+// @version             1.4.12
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -641,7 +641,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     function setParentId() {
         let url = oldUrl.replace(/https?:\/\/twitter.com/, "");
         if (url.startsWith("/")) {
-            let uid = url.replace(/\?/, "").split("/")?.[1];
+            let urls = url.replace(/\?/, "/").split("/")
+            let uid = urls?.[1] ?? urls[0];
             if (uid && uid != "home" && uid != "search") {
                 uid = "@" + uid;
                 log(`親投稿者: ${uid}`);
