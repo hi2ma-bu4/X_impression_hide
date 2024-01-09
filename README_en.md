@@ -29,8 +29,8 @@ and you can open it.
 ### Setting details
 |name|explanation|initial value|type,extent|
 |:---|:---|:---:|:---:|
-|非表示ログを表示|非表示にしたログを画面から消します。<br>画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。|true|boolean|
-|禁止する表現|非表示にするテキストを指定します[^1][^2]。<br>記述方法は正規表現[^3]で記述します。|Omitted due to length|string|
+|Show hidden logs|It will remove the hidden logs from the screen.<br>The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.|true|boolean|
+|Prohibited expressions|Specify the text to hide[^1][^2].<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
 |許可する言語|許可する言語を指定します。<br>記述方法は正規表現[^3]で記述します。|Omitted due to length|string|
 |自身の引用禁止|自身を引用ツイートする投稿を非表示にします。|true|boolean|
 |認証アカウント禁止|認証済アカウントを無差別にブロックします。|false|boolean|

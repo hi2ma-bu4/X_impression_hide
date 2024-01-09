@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.4.12
+// @version             1.5.1
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -75,6 +75,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const DEBUG = false;
 
     // 初期値(定数)
+    const LANGUAGE = "ja";
     const VISIBLE_LOG = true;
     const ONESELF_RETWEET_BLOCK = true;
     const VERIFY_BLOCK = false;
@@ -98,7 +99,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ^[\\u0600-\\u07FF]+$
 `;
 
-    const ALLOW_LANG = "ja|en|qme|und";
+    const ALLOW_LANG = "ja|en|zh|qme|und";
     const MAX_SAVE_TEXT_SIZE = 80;
     const MIN_SAVE_TEXT_SIZE = 8;
     const MSG_RESEMBLANCE = 0.8;
@@ -196,12 +197,23 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     tab-size: 4;
     white-space: nowrap;
 }
+#${EX_MENU_ID} input[type=text] {
+    width: 95%;
+}
+
 #${EX_MENU_ID} input[type=checkbox] + span::after {
     content: "無効";
 }
 #${EX_MENU_ID} input[type=checkbox]:checked + span::after {
     content: "有効";
 }
+#${EX_MENU_ID}[lang=en] input[type=checkbox] + span::after {
+    content: "Invalid";
+}
+#${EX_MENU_ID}[lang=en] input[type=checkbox]:checked + span::after {
+    content: "Validity";
+}
+
 
 #${EX_MENU_ID} details {
     margin-top: 1em;
@@ -220,64 +232,119 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
     const SETTING_LIST = {
         visibleLog: {
-            name: "非表示ログを表示",
-            explanation: `非表示にしたログを画面から消します。
+            name: {
+                ja: "非表示ログを表示",
+                en: "Show hidden logs",
+            },
+            explanation: {
+                ja: `非表示にしたログを画面から消します。
 画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。`,
+                en: `It will remove the hidden logs from the screen.
+The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.`,
+            },
             data: VISIBLE_LOG,
             _data: VISIBLE_LOG,
             input: "checkbox",
         },
         blackTextReg: {
-            name: "禁止する表現",
-            explanation: `非表示にするテキストを指定します。
+            name: {
+                ja: "禁止する表現",
+                en: "Prohibited expressions",
+            },
+            explanation: {
+                ja: `非表示にするテキストを指定します。
 記述方法は正規表現(/の間部分)で記述します。
 (半角カタカナ、カタカナはひらがなに自動変換されます)
 (全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます)`,
+                en: `Specify the text to hide.
+The description should be written using regular expressions (between the / characters).
+Half-width katakana and katakana will be automatically converted to hiragana.
+Full-width alphanumeric characters will be converted to half-width,
+ and line breaks will be converted to spaces automatically.`,
+            },
             data: BLACK_TEXT_REG,
             _data: BLACK_TEXT_REG,
             input: "textarea",
         },
         allowLang: {
-            name: "許可する言語",
-            explanation: `許可する言語を指定します。
+            name: {
+                ja: "許可する言語",
+                en: "Allowed languages",
+            },
+            explanation: {
+                ja: `許可する言語を指定します。
 記述方法は正規表現(/の間部分)で記述します。`,
+                en: `Specify the allowed languages.
+The description should be written using regular expressions (between the / characters).`,
+            },
             data: ALLOW_LANG,
             _data: ALLOW_LANG,
             input: "text",
         },
         oneselfRetweetBlock: {
-            name: "自身の引用禁止",
-            explanation: `自身を引用ツイートする投稿を非表示にします。`,
+            name: {
+                ja: "自身の引用禁止",
+                en: "Prohibition of self-quotation",
+            },
+            explanation: {
+                ja: `自身を引用ツイートする投稿を非表示にします。`,
+                en: `It hides posts that quote oneself.`,
+            },
             data: ONESELF_RETWEET_BLOCK,
             _data: ONESELF_RETWEET_BLOCK,
             input: "checkbox",
         },
         verifyBlock: {
-            name: "認証アカウント禁止",
-            explanation: `認証済アカウントを無差別にブロックします。`,
+            name: {
+                ja: "認証アカウント禁止",
+                en: "Prohibition of authenticated accounts",
+            },
+            explanation: {
+                ja: `認証済アカウントを無差別に非表示にします。`,
+                en: `It indiscriminately hides authenticated accounts.`,
+            },
             data: VERIFY_BLOCK,
             _data: VERIFY_BLOCK,
             input: "checkbox",
         },
         verifyOnryFilter: {
-            name: "認証アカウントのみ判定",
-            explanation: `認証済アカウントのみを検知の対象にします。
+            name: {
+                ja: "認証アカウントのみ判定",
+                en: "Authenticate accounts only",
+            },
+            explanation: {
+                ja: `認証済アカウントのみを検知の対象にします。
 通常アカウントや認証マークの無いアカウントはブロックされなくなります。`,
+                en: `It detects only authenticated accounts.
+Regular accounts and accounts without verification badges will no longer be blocked.`,
+            },
             data: VERIFY_ONRY_FILTER,
             _data: VERIFY_ONRY_FILTER,
             input: "checkbox",
         },
         maxHashtagCount: {
-            name: "ハッシュタグの上限数",
-            explanation: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
+            name: {
+                ja: "ハッシュタグの上限数",
+                en: "Maximum number of hashtags",
+            },
+            explanation: {
+                ja: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
+                en: `It specifies the maximum number of hashtags allowed in a single post.`,
+            },
             data: MAX_HASHTAG_COUNT,
             _data: MAX_HASHTAG_COUNT,
             input: "number",
             min: 1,
         },
         msgResemblance: {
-            name: "文章類似度許可ライン",
-            explanation: `コピペ文章かを判別する為の基準値を指定します。`,
+            name: {
+                ja: "文章類似度許可ライン",
+                en: "Text similarity threshold",
+            },
+            explanation: {
+                ja: `コピペ文章かを判別する為の基準値を指定します。`,
+                en: `"It specifies the threshold value for determining whether a text is a copied and pasted text.`,
+            },
             data: MSG_RESEMBLANCE,
             _data: MSG_RESEMBLANCE,
             input: "number",
@@ -286,38 +353,85 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             step: 0.01,
         },
         maxSaveTextSize: {
-            name: "比較される最大テキストサイズ",
-            explanation: `コピペ投稿の文章比較の最大文字数を指定します。
+            name: {
+                ja: "比較される最大テキストサイズ",
+                en: "Maximum text size for comparison",
+            },
+            explanation: {
+                ja: `コピペ投稿の文章比較の最大文字数を指定します。
 値を大きくするほど誤検知率は減り、検知率も減ります。
 (投稿の文字数が最大値以下の場合、この値は使用されません)`,
+                en: `It specifies the maximum number of characters for text comparison in copied and pasted posts.
+Increasing the value reduces the false positive rate but also reduces the detection rate.
+(This value is not used if the post's character count is below the maximum value.)`,
+            },
             data: MAX_SAVE_TEXT_SIZE,
             _data: MAX_SAVE_TEXT_SIZE,
             input: "number",
             min: 0,
         },
         minSaveTextSize: {
-            name: "一時保存・比較される最小テキストサイズ",
-            explanation: `比較用文章の最小文字数を指定します。
+            name: {
+                ja: "一時保存・比較される最小テキストサイズ",
+                en: "The minimum text size that is temporarily saved and compared",
+            },
+            explanation: {
+                ja: `比較用文章の最小文字数を指定します。
 値が大きくするほど誤検知率は減り、検知率も減ります。
 ([比較される最大テキストサイズ]より大きい場合、比較処理は実行されません)`,
+                en: `This specifies the minimum number of characters for the comparison text.
+Increasing the value reduces the false detection rate as well as the detection rate.
+If it is larger than the [maximum text size for comparison], the comparison process will not be executed.`,
+            },
             data: MIN_SAVE_TEXT_SIZE,
             _data: MIN_SAVE_TEXT_SIZE,
             input: "number",
             min: 0,
         },
         maxSaveLogSize: {
-            name: "一時保存される投稿の最大数",
-            explanation: `比較用文章の保持数を指定します。
-値が小さいほど処理は軽くなりますが、検知率が減ります`,
+            name: {
+                ja: "一時保存される投稿の最大数",
+                en: "The maximum number of posts that are temporarily saved",
+            },
+            explanation: {
+                ja: `比較用文章の保持数を指定します。
+値が小さいほど処理は軽くなりますが、検知率が減ります。`,
+                en: `This specifies the number of comparison texts to be retained.
+A smaller value reduces the processing load but also decreases the detection rate.`,
+            },
             data: MAX_SAVE_LOG_SIZE,
             _data: MAX_SAVE_LOG_SIZE,
             input: "number",
             min: 1,
         },
+        language: {
+            name: {
+                ja: "言語",
+                en: "Language"
+            },
+            explanation: {
+                ja: `表示言語を設定します。`,
+                en: `Set the display language.`,
+            },
+            data: LANGUAGE,
+            _data: LANGUAGE,
+            input: "select",
+            select: {
+                ja: "日本語(ja)",
+                en: "English(en)",
+            },
+        },
         bodyObsTimeout: {
-            name: "ページ更新検知用処理待機時間(ms)",
-            explanation: `ページ更新を検知する際の検知の更新間隔を指定します。
+            name: {
+                ja: "ページ更新検知用処理待機時間(ms)",
+                en: "Processing wait time (in milliseconds) for page update detection",
+            },
+            explanation: {
+                ja: `ページ更新を検知する際の検知の更新間隔を指定します。
 値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。`,
+                en: `This specifies the interval for detecting page updates.
+A larger value reduces the processing load but may potentially delay the initial speed of hiding.`,
+            },
             data: BODY_OBS_TIMEOUT,
             _data: BODY_OBS_TIMEOUT,
             input: "number",
@@ -325,19 +439,33 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             advanced: true,
         },
         customCss: {
-            name: "ページ適用css設定",
-            explanation: `ページへ適用するcssを指定します。`,
+            name: {
+                ja: "ページ適用css設定",
+                en: "Page-specific CSS settings"
+            },
+            explanation: {
+                ja: `ページへ適用するcssを指定します。`,
+                en: `Specify the CSS to apply to the page.`,
+            },
             data: CUSTOM_CSS,
             _data: CUSTOM_CSS,
             input: "textarea",
             advanced: true,
         },
         resetSetting: {
-            name: "設定のリセット",
-            explanation: `設定項目をリセットします。
+            name: {
+                ja: "設定のリセット",
+                en: "Reset settings.",
+            },
+            explanation: {
+                ja: `設定項目をリセットします。
 (ページがリロードされます)
 <span style="color: #f00">実行すると設定は復元出来ません！！！</span>`,
-            value: "リセットする",
+                en: `Reset the settings.
+(The page will be reloaded.)
+<span style="color: #f00">Once executed, the settings cannot be restored!!!</span>`,
+            },
+            value: "Reset",
             input: "button",
             advanced: true,
         },
@@ -504,11 +632,23 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
     function menu_init() {
         let w_exMenuDOM = document.createElement("div");
-        w_exMenuDOM.innerHTML = /* html */ `
-<small style="color:#d00">変更の保存をした場合、ページを更新してください。</small>`;
         let advanceDOM = document.createElement("details");
-        advanceDOM.innerHTML = /* html */ `
+        switch (SETTING_LIST.language.data) {
+            case "ja":
+                w_exMenuDOM.innerHTML = /* html */ `
+<small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
+<small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`;
+                advanceDOM.innerHTML = /* html */ `
 <summary>高度な設定</summary>`;
+                break;
+            case "en":
+                w_exMenuDOM.innerHTML = /* html */ `
+<small style="color:#d00">"If you have saved the changes, please refresh the page.</small><br>
+<small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`;
+                advanceDOM.innerHTML = /* html */ `
+<summary>高度な設定</summary>`;
+                break;
+        }
         for (let key in SETTING_LIST) {
             let item = SETTING_LIST[key];
             // 入力欄作成
@@ -546,6 +686,16 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
                     input_elem = document.createElement("textarea");
                     input_elem.value = item.data;
                     break;
+                case "select":
+                    input_elem = document.createElement("select");
+                    if (item?.select) {
+                        let tmp = "";
+                        for (let key in item.select) {
+                            tmp += `<option value="${key}" ${SETTING_LIST.language.data == key ? "selected" : ""}>${item.select[key]}</option>`
+                        }
+                        input_elem.innerHTML = tmp;
+                    }
+                    break;
                 default:
                     console.warn("対応していない形式", item);
                     continue;
@@ -557,14 +707,15 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             // 名前
             if (item?.name) {
                 let name_elem = document.createElement("p");
-                name_elem.innerText = item.name;
+                name_elem.innerText = item.name?.[SETTING_LIST.language.data] ?? item.name?.["ja"] ?? "?";
                 name_elem.classList.add(EX_MENU_ITEM_BASE_ID + "_name")
                 div.appendChild(name_elem);
             }
             // 説明
             if (item?.explanation) {
                 let ex_elem = document.createElement("p");
-                ex_elem.innerHTML = item.explanation.replace(/\n/g, "<br/>");
+                let tmp = item.explanation?.[SETTING_LIST.language.data] ?? item.explanation?.["ja"] ?? "?";
+                ex_elem.innerHTML = tmp.replace(/\n/g, "<br/>");
                 div.appendChild(ex_elem);
             }
 
@@ -586,18 +737,32 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
             div.id = EX_MENU_ITEM_BASE_ID + "__btns";
             let btn_elem = document.createElement("input");
             btn_elem.type = "button";
-            btn_elem.value = "保存";
+            switch (SETTING_LIST.language.data) {
+                case "ja":
+                    btn_elem.value = "保存";
+                    break;
+                case "en":
+                    btn_elem.value = "Save";
+            }
             btn_elem.id = EX_MENU_ITEM_BASE_ID + "__save";
             div.appendChild(btn_elem);
             btn_elem = document.createElement("input");
             btn_elem.type = "button";
-            btn_elem.value = "閉じる";
+            switch (SETTING_LIST.language.data) {
+                case "ja":
+                    btn_elem.value = "閉じる";
+                    break;
+                case "en":
+                    btn_elem.value = "Close";
+                    break;
+            }
             btn_elem.id = EX_MENU_ITEM_BASE_ID + "__close";
             div.appendChild(btn_elem);
             w_exMenuDOM.appendChild(div);
         }
         exMenuDOM = document.createElement("div");
         exMenuDOM.id = EX_MENU_ID;
+        exMenuDOM.lang = SETTING_LIST.language.data;
         exMenuDOM.appendChild(w_exMenuDOM);
     }
 
@@ -976,10 +1141,18 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         if (SETTING_LIST.visibleLog.data) {
             let div = document.createElement("div");
             div.classList.add(LOG_CLASS);
+
+            let bstw = "元Tweetを見る"
+            switch (SETTING_LIST.language.data) {
+                case "en":
+                    bstw = "View original Tweet";
+                    break;
+            }
+
             div.innerHTML = /* html */ `
 <span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a></span>
 
-<label><input type="checkbox">元Tweetを見る</label>
+<label><input type="checkbox">${bstw}</label>
 `;
             mesData.card.prepend(div);
         }
@@ -1067,6 +1240,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
                     case "radiobutton":
                         // 使ってない
                         break;
+                    case "select":
+                        for (let i = 0; i < elem.length; i++) {
+                            if (elem[i]?.selected) {
+                                data = elem[i].value;
+                                break;
+                            }
+                        }
+                        break;
                     default:
                         continue;
                 }
@@ -1095,7 +1276,12 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     }
 
     function menuReset() {
-        if (confirm("本当にリセットを実行しますか？")) {
+        let cf = "本当にリセットを実行しますか？";
+        switch (SETTING_LIST.language.data) {
+            case "en":
+                cf = "Are you sure you want to execute the reset?";
+        }
+        if (confirm(cf)) {
             log("リセット処理実行");
             GM_deleteValue(SETTING_SAVE_KEY);
             location.reload();
