@@ -16,6 +16,8 @@
 |:---:|:---:|
 |![after1](image/after1.png)|![after2](image/after2.png)|
 
+<sub>Images are from the development stage.</sub>
+
 ### Usage
 Simply add it to Tampermonkey to use.
 

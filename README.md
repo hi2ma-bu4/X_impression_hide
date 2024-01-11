@@ -16,6 +16,8 @@
 |:---:|:---:|
 |![after1](image/after1.png)|![after2](image/after2.png)|
 
+<sub>画像は開発段階のものです。</sub>
+
 ### 使い方
 Tampermonkeyに追加するだけで使用できます。
 
