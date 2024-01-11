@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.5.9
+// @version             1.5.10
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -48,6 +48,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 /* todo
 ・検知率を上げる
     ・連投の検知
+        ・親ツイートの分別・判定
     ・あやしい日本語の検知(多分自分の実力じゃ無理)
     ・フィルターをもっと有能に
 ・誤検知を減らす(今はまだいい？)
@@ -99,6 +100,11 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# アラビア語のみで構成
 ^[\\u0600-\\u07FF]+$
 `;
+    const WHITE_TEXT_REG = `!# 同上
+
+!# 例としてMisskey構文に対応してみる
+^:[a-z0-9\-_]:$
+`;
 
     const ALLOW_LANG = "ja|en|zh|qme|und";
     const MAX_SAVE_TEXT_SIZE = 80;
@@ -118,6 +124,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const EX_MENU_ID = PRO_NAME + "_menu";
     const EX_MENU_OPEN_CLASS = EX_MENU_ID + "_open";
     const EX_MENU_ITEM_BASE_ID = EX_MENU_ID + "_item_";
+    const EX_MENU_ITEM_ERROR_CLASS = EX_MENU_ID + "_err";
 
     const OBS_QUERY = "section > div > div:has(article)";
     const RE_QUERY = `div:has(div > div > article):not(.${CHECK_CLASS})`;
@@ -215,7 +222,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     content: "Validity";
 }
 
-
 #${EX_MENU_ID} details {
     margin-top: 1em;
 }
@@ -228,6 +234,11 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 .${EX_MENU_ITEM_BASE_ID}_name + p {
     font-size: .8em;
     margin: 0 4px;
+}
+
+.${EX_MENU_ITEM_ERROR_CLASS} {
+    color: red;
+    margin: 0;
 }
 `;
 
@@ -265,6 +276,23 @@ Full-width alphanumeric characters will be converted to half-width,
             },
             data: BLACK_TEXT_REG,
             _data: BLACK_TEXT_REG,
+            input: "textarea",
+        },
+        whiteTextReg: {
+            name: {
+                ja: "許可する表現",
+                en: "Expressions allowed",
+            },
+            explanation: {
+                ja: `許可するテキストを指定します。
+一致する投稿は非表示の対象になりません。
+指定方法などは[禁止する表現]と同じです。`,
+                en: `Specify the text to allow.
+Matching posts will not be hidden.
+The specification method is the same as [Prohibited expressions].`,
+            },
+            data: WHITE_TEXT_REG,
+            _data: WHITE_TEXT_REG,
             input: "textarea",
         },
         allowLang: {
@@ -480,6 +508,7 @@ A larger value reduces the processing load but may potentially delay the initial
     let exMenuDOM = null;
 
     const blacklist_reg = [];
+    const whitelist_reg = [];
     let allowLang_reg = /.*/;
     const msgDB = [];
     const msgDB_id = new Set();
@@ -576,8 +605,9 @@ A larger value reduces the processing load but may potentially delay the initial
             }
         }
 
+        // フィルター正規表現設定
         {
-            // フィルター正規表現設定
+            // ブラックリスト
             let spText = SETTING_LIST.blackTextReg.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
@@ -595,6 +625,24 @@ A larger value reduces the processing load but may potentially delay the initial
                 }
             }
 
+            // ホワイトリスト
+            spText = SETTING_LIST.whiteTextReg.data
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+
+            for (let row of spText) {
+                if (row.trim().length && !row.startsWith("!#")) {
+                    try {
+                        whitelist_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
+                    }
+                    catch (e) {
+                        console.error(`[${PRO_NAME}]`, e);
+                        SETTING_LIST.whiteTextReg.isError = true;
+                    }
+                }
+            }
+
             // 投稿の言語を制限
             try {
                 allowLang_reg = new RegExp(SETTING_LIST.allowLang.data.trim(), "i");
@@ -603,6 +651,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 console.error(e);
                 SETTING_LIST.allowLang.isError = true;
             }
+
         }
 
         // 画面移管時対応
@@ -724,6 +773,21 @@ A larger value reduces the processing load but may potentially delay the initial
             if (add_elem) {
                 div.appendChild(add_elem);
             }
+
+            if (item?.isError) {
+                let errDOM = document.createElement("p");
+                errDOM.classList.add(EX_MENU_ITEM_ERROR_CLASS);
+                switch (SETTING_LIST.language.data) {
+                    case "ja":
+                        errDOM.innerText = "上記の設定内容の実行に失敗しました";
+                        break;
+                    case "en":
+                        errDOM.innerText = "Failed to execute the above settings";
+                        break;
+                }
+                div.appendChild(errDOM);
+            }
+
             if (item.advanced) {
                 advanceDOM.appendChild(div);
             }
@@ -1033,7 +1097,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 return
             case 4:
                 // 異常なハッシュタグの使用
-                hideComment(messageData, `<span title="使用回数: ${ret[1]}">#多量使用</span>`)
+                hideComment(messageData, `<span title="使用回数: ${ret[1]}">#多量使用</span>`);
                 return;
             case 5:
                 // 自分自身の引用
@@ -1136,6 +1200,14 @@ A larger value reduces the processing load but may potentially delay the initial
 
     function hideComment(mesData, reason, ch = true) {
         blacklist_id.add(mesData.id);
+
+
+        // フィルターによる検出
+        for (let reg of whitelist_reg) {
+            if (reg[0].test(mesData.cleanStr)) {
+                return;
+            }
+        }
 
         mesData.card.classList.add(HIDE_CLASS);
 
@@ -1436,4 +1508,3 @@ A larger value reduces the processing load but may potentially delay the initial
         }
     }
 })();
-
