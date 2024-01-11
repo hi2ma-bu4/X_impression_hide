@@ -36,6 +36,7 @@ and you can open it.
 |:---|:---|:---:|:---:|
 |Show hidden logs|It will remove the hidden logs from the screen.<br>The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.|true|boolean|
 |Prohibited expressions|Specify the text to hide[^1][^2].<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
+|Expressions allowed|Specify the text to allow.<br>Matching posts will not be hidden.<br>The specification method is the same as [Prohibited expressions].|Omitted due to length|string|
 |Allowed languages|Specify the allowed languages.<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
 |Prohibition of self-quotation|It hides posts that quote oneself.|true|boolean|
 |Prohibition of authenticated accounts|It indiscriminately hides authenticated accounts.|false|boolean|
