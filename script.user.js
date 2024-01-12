@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.5.11
+// @version             1.6.1
 // @description         Twitterのインプレゾンビを非表示にするツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にするツールです。
 // @description:en      This is a tool to hide spam on Twitter.
@@ -56,6 +56,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・クイックブロックボタンを作成
 ・whitelist_filterの実装
     ・名前
+    ・内容
 ・blacklist_filterの拡張
     ・名前
 ・blacklist_idを保存するかの設定
@@ -81,6 +82,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const ONESELF_RETWEET_BLOCK = true;
     const VERIFY_BLOCK = false;
     const VERIFY_ONRY_FILTER = false;
+    const VISIBLE_BLOCK_BUTTON = true;
+    const VISIBLE_REPORT_BUTTON = true;
 
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
@@ -131,6 +134,18 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const NAME_QUERY = `:not(span) > span > span`;
     const ID_QUERY = "div > span:not(:has(span))";
     const IMAGE_QUERY = "a img";
+    const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
+    const MENU_DISP_QUERY = "[role=group] [role=menu]";
+    const BLOCK_QUERY_LIST = [
+        `${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`,
+        "[role=alertdialog] [role=group] [role=button] div",
+    ];
+    const REPORT_QUERY_LIST = [
+        `${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M3 2h18"])`,
+        ["[role=radiogroup] label", 5],
+        "[role=group]:has([role=radiogroup]) div[role=button]:not(:has(svg))",
+        ["[role=group] div[role=button]:not(:has(svg))", 1],
+    ];
 
     const BASE_CSS = /* css */ `
 #${EX_MENU_ID} {
@@ -174,6 +189,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     display: none;
 }
 
+.${HIDE_CLASS}:has(.${LOG_CLASS}):not(:has([lang])) {
+display: none;
+}
+
 /* 検出内容の表示設定 */
 .${HIDE_CLASS} {
     background: #aaaa;
@@ -193,6 +212,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 }
 .${LOG_CLASS} label:hover {
     text-decoration: underline;
+}
+
+.${LOG_CLASS} input[type=button] {
+    cursor: pointer;
+    background-color: rgba(0,0,0,0);
+}
+.${LOG_CLASS} input[type=button]:hover {
+    background-color: rgba(29, 155, 240, .5);
 }
 
 /* メニュー表示設定 */
@@ -348,6 +375,38 @@ Regular accounts and accounts without verification badges will no longer be bloc
             },
             data: VERIFY_ONRY_FILTER,
             _data: VERIFY_ONRY_FILTER,
+            input: "checkbox",
+        },
+        visibleBlockButton: {
+            name: {
+                ja: "クイックブロック表示",
+                en: "Quick block button display",
+            },
+            explanation: {
+                ja: `1クリックでブロックできるボタンを表示します。
+検出された投稿にしか表示されません。`,
+                en: `Displays a button that allows you to block with one click.
+It will only appear on detected posts.`,
+            },
+            data: VISIBLE_BLOCK_BUTTON,
+            _data: VISIBLE_BLOCK_BUTTON,
+            input: "checkbox",
+        },
+        visibleReportButton: {
+            name: {
+                ja: "クイック通報表示",
+                en: "Quick report button display",
+            },
+            explanation: {
+                ja: `1クリックで通報できるボタンを表示します。
+検出された投稿にしか表示されません。
+(初期値はスパム報告です)`,
+                en: `Displays a button that allows you to report with one click.
+It will only appear on detected posts.
+(Initial value is spam report)`,
+            },
+            data: VISIBLE_REPORT_BUTTON,
+            _data: VISIBLE_REPORT_BUTTON,
             input: "checkbox",
         },
         maxHashtagCount: {
@@ -927,6 +986,7 @@ A larger value reduces the processing load but may potentially delay the initial
             verify: false,
             attach_img: false,
             reTweet: null,
+            menuDOM: null,
             _nsOneLoadFlag: false,
         };
 
@@ -1044,6 +1104,17 @@ A larger value reduces the processing load but may potentially delay the initial
         messageData.emoji = emojiLst;
         messageData.cleanStr = othToHira(str).replace(CrLfReg, " ");
         messageData.str_len = messageData.cleanStr.length;
+
+        // メニュー取得(...のこと)
+        let menuDOMs = article.querySelectorAll(MENU_BUTTON_QUERY)
+        if (menuDOMs.length >= 3) {
+            messageData.menuDOM = menuDOMs[0];
+        }
+        else {
+            setTimeout(function () {
+                messageData.menuDOM = article.querySelector(MENU_BUTTON_QUERY);
+            }, 1000);
+        }
 
         //log(messageData);
         // 投稿主保護
@@ -1222,10 +1293,28 @@ A larger value reduces the processing load but may potentially delay the initial
             }
 
             div.innerHTML = /* html */ `
-<span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a></span>
+<span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a> </span>
 
 <label><input type="checkbox">${bstw}</label>
 `;
+            if (SETTING_LIST.visibleBlockButton.data) {
+                let blockBtn = document.createElement("input");
+                blockBtn.type = "button";
+                blockBtn.value = "Block";
+                div.firstElementChild.appendChild(blockBtn);
+                blockBtn.addEventListener("click", function () {
+                    menuClicker(BLOCK_QUERY_LIST, mesData)
+                });
+            }
+            if (SETTING_LIST.visibleReportButton.data) {
+                let reportBtn = document.createElement("input");
+                reportBtn.type = "button";
+                reportBtn.value = "Report";
+                div.firstElementChild.appendChild(reportBtn);
+                reportBtn.addEventListener("click", function () {
+                    menuClicker(REPORT_QUERY_LIST, mesData)
+                });
+            }
             mesData.card.prepend(div);
         }
         // 無駄な比較をしないように
@@ -1248,6 +1337,38 @@ A larger value reduces the processing load but may potentially delay the initial
             }
             msgDB_id.delete(id);
         }
+    }
+
+
+    function menuClicker(list, mesData) {
+        if (!mesData.menuDOM) {
+            return;
+        }
+        mesData.menuDOM.click();
+        autoClick(list);
+    }
+
+    // 自動クリック
+    function autoClick(list, par = document.body, i = 0) {
+        if (list.length <= i) {
+            return;
+        }
+        let q = list[i]
+        let j = 0;
+        if (Array.isArray(q)) {
+            j = q[1];
+            q = q[0];
+        }
+        let elem = par.querySelectorAll(q)?.[j];
+        console.log(list[i], elem)
+        if (elem) {
+            elem.click();
+            autoClick(list, par, i + 1);
+            return;
+        }
+        setTimeout(function () {
+            autoClick(list, par, i);
+        }, 100);
     }
 
 

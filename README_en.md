@@ -43,6 +43,8 @@ and you can open it.
 |Prohibition of self-quotation|It hides posts that quote oneself.|true|boolean|
 |Prohibition of authenticated accounts|It indiscriminately hides authenticated accounts.|false|boolean|
 |Authenticate accounts only|It detects only authenticated accounts.<br>Regular accounts and accounts without verification badges will no longer be blocked.|false|boolean|
+|Quick block button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.|true|boolean|
+|Quick report button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.<br>(Initial value is spam report)|true|boolean|
 |Maximum number of hashtags|It specifies the maximum number of hashtags allowed in a single post.|6|int (1~)|
 |Text similarity threshold|It specifies the threshold value for determining whether a text is a copied and pasted text.|0.8|float (0~1)|
 |Maximum text size for comparison|It specifies the maximum number of characters for text comparison in copied and pasted posts.[^4].<br>Increasing the value reduces the false positive rate but also reduces the detection rate.|80|int (0~)|
