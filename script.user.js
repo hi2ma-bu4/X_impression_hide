@@ -5,12 +5,12 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.6.1
-// @description         Twitterのインプレゾンビを非表示にするツールです。
-// @description:ja      Twitterのインプレゾンビを非表示にするツールです。
-// @description:en      This is a tool to hide spam on Twitter.
-// @description:zh-CN   这是一个可以隐藏 Twitter 垃圾信息的工具。
-// @description:zh-TW   這是一個可以隱藏 Twitter 垃圾訊息的工具。
+// @version             1.6.2
+// @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
+// @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
+// @description:en      A tool to hide, block, and report spam on Twitter.
+// @description:zh-CN   用于隐藏、阻止和报告 Twitter 上的垃圾邮件的工具。
+// @description:zh-TW   用於隱藏、封鎖和報告 Twitter 上的垃圾郵件的工具。
 // @author              tromtub(snows)
 // @license             GPL-3.0
 // @match               https://twitter.com/*
@@ -22,6 +22,7 @@
 // @supportURL          https://greasyfork.org/ja/scripts/484303-twitter-旧-𝕏-のインプレッション小遣い稼ぎ野郎どもをdisplay-none-するやつ
 // @compatible          chrome
 // @compatible          edge
+// @compatible          opera chromium製なので動くと仮定
 // @grant               GM.addStyle
 // @grant               GM_setValue
 // @grant               GM_getValue
