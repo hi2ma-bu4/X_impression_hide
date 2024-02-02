@@ -39,8 +39,11 @@ and you can open it.
 |Show hidden logs|It will remove the hidden logs from the screen.<br>The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.|true|boolean|
 |Prohibited expressions|Specify the text to hide[^1][^2].<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
 |Expressions allowed|Specify the text to allow.<br>Matching posts will not be hidden.<br>The specification method is the same as [Prohibited expressions].|Omitted due to length|string|
+|Prohibited name|Specify the username to hide.<br>The specification method is the same as [Prohibited expressions].|true|boolean|
 |Allowed languages|Specify the allowed languages.<br>The description should be written using regular expressions[^3].|Omitted due to length|string|
 |Prohibition of self-quotation|It hides posts that quote oneself.|true|boolean|
+|No emoji posting|Hide posts composed only of emojis.|true|boolean|
+|Prohibit emoji usernames|Hide usernames composed only of emojis.|true|boolean|
 |Prohibition of authenticated accounts|It indiscriminately hides authenticated accounts.|false|boolean|
 |Authenticate accounts only|It detects only authenticated accounts.<br>Regular accounts and accounts without verification badges will no longer be blocked.|false|boolean|
 |Quick block button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.|true|boolean|
@@ -53,6 +56,7 @@ and you can open it.
 |Language|Set the display language.|ja|string (ja\|en)|
 |Processing wait time (in milliseconds) for page update detection|This specifies the interval for detecting page updates.<br>A larger value reduces the processing load but may potentially delay the initial speed of hiding.|3000|int (100~)|
 |Page-specific CSS settings|Specify the CSS to apply to the page.|Omitted due to length|string|
+|[Not recommended] Automatic block|Automatically block detected targets[^6].|false|boolean|
 |Reset settings|Reset the settings.|No value because it is a button||
 
 [^1]: Half-width katakana and katakana are automatically converted to hiragana,<br>full-width alphanumeric characters are automatically converted to half-width alphanumeric characters,<br> and line feed characters are automatically converted to half-width spaces.
@@ -60,6 +64,7 @@ and you can open it.
 [^3]: The regular expression here refers to the part between "/".
 [^4]: If your post's character count is less than or equal to the maximum value, this value will not be used.
 [^5]: If it is larger than [Maximum text size for comparison], the comparison process will not be performed.
+[^6]: This feature is in beta version! !<br>Even false positives are blocked without hesitation.
 
 
 ### If there is a configuration mistake or a configuration update misalignment due to a version upgrade.
