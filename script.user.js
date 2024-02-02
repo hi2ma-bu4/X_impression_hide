@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.6.3
+// @version             1.7.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -54,11 +54,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     ・フィルターをもっと有能に
 ・誤検知を減らす(今はまだいい？)
 ・クイックミュートボタンを作成
-・クイックブロックボタンを作成
 ・whitelist_filterの実装
-    ・名前
-    ・内容
-・blacklist_filterの拡張
     ・名前
 ・blacklist_idを保存するかの設定
 ・他人の引用ツイートでの言語フィルターを作成
@@ -66,7 +62,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・menuをもっと見やすく(たすけて)
 ・gifをブロック
 ・正規表現などの最適化
-・英語メニュー作成
 ・軽量化
 ・kiwi browserで動くようにする
 */
@@ -81,10 +76,13 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const LANGUAGE = "ja";
     const VISIBLE_LOG = true;
     const ONESELF_RETWEET_BLOCK = true;
+    const EMOJI_ONRY_BLOCK = true;
+    const EMOJI_ONRY_NAME_BLOCK = true;
     const VERIFY_BLOCK = false;
     const VERIFY_ONRY_FILTER = false;
     const VISIBLE_BLOCK_BUTTON = true;
     const VISIBLE_REPORT_BUTTON = true;
+    const AUTO_BLOCK = false;           // trueにしてはいけない(戒め)
 
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
@@ -108,8 +106,13 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# 例としてMisskey構文に対応してみる
 ^:[a-z0-9\-_]:$
 `;
+    const BLACK_NAME_REG = `!# 同上
 
-    const ALLOW_LANG = "ja|en|zh|qme|und";
+!# アラビア語のみで構成
+^[\\u0600-\\u07FF]+$
+`
+
+    const ALLOW_LANG = "ja|en|zh|qme|qam|und";
     const MAX_SAVE_TEXT_SIZE = 80;
     const MIN_SAVE_TEXT_SIZE = 8;
     const MSG_RESEMBLANCE = 0.8;
@@ -322,6 +325,21 @@ The specification method is the same as [Prohibited expressions].`,
             _data: WHITE_TEXT_REG,
             input: "textarea",
         },
+        blackNameReg: {
+            name: {
+                ja: "禁止する名前",
+                en: "Prohibited name",
+            },
+            explanation: {
+                ja: `非表示にするユーザー名を指定します。
+指定方法などは[禁止する表現]と同じです。`,
+                en: `Specify the username to hide.
+The specification method is the same as [Prohibited expressions].`,
+            },
+            data: BLACK_NAME_REG,
+            _data: BLACK_NAME_REG,
+            input: "textarea",
+        },
         allowLang: {
             name: {
                 ja: "許可する言語",
@@ -348,6 +366,32 @@ The description should be written using regular expressions (between the / chara
             },
             data: ONESELF_RETWEET_BLOCK,
             _data: ONESELF_RETWEET_BLOCK,
+            input: "checkbox",
+        },
+        emojiOnryBlock: {
+            name: {
+                ja: "絵文字投稿禁止",
+                en: "No emoji posting",
+            },
+            explanation: {
+                ja: `絵文字のみで構成された投稿を非表示にします。`,
+                en: `Hide posts composed only of emojis.`,
+            },
+            data: EMOJI_ONRY_BLOCK,
+            _data: EMOJI_ONRY_BLOCK,
+            input: "checkbox",
+        },
+        emojiOnryNameBlock: {
+            name: {
+                ja: "絵文字ユーザー名禁止",
+                en: "Prohibit emoji usernames",
+            },
+            explanation: {
+                ja: `絵文字のみで構成されたユーザー名を非表示にします。`,
+                en: `Hide usernames composed only of emojis.`,
+            },
+            data: EMOJI_ONRY_NAME_BLOCK,
+            _data: EMOJI_ONRY_NAME_BLOCK,
             input: "checkbox",
         },
         verifyBlock: {
@@ -509,6 +553,20 @@ A smaller value reduces the processing load but also decreases the detection rat
                 en: "English(en)",
             },
         },
+        customCss: {
+            name: {
+                ja: "ページ適用css設定",
+                en: "Page-specific CSS settings"
+            },
+            explanation: {
+                ja: `ページへ適用するcssを指定します。`,
+                en: `Specify the CSS to apply to the page.`,
+            },
+            data: CUSTOM_CSS,
+            _data: CUSTOM_CSS,
+            input: "textarea",
+            advanced: true,
+        },
         bodyObsTimeout: {
             name: {
                 ja: "ページ更新検知用処理待機時間(ms)",
@@ -526,18 +584,22 @@ A larger value reduces the processing load but may potentially delay the initial
             min: 100,
             advanced: true,
         },
-        customCss: {
+        autoBlock: {
             name: {
-                ja: "ページ適用css設定",
-                en: "Page-specific CSS settings"
+                ja: "【非推奨】自動ブロック",
+                en: "[Not recommended] Automatic block",
             },
             explanation: {
-                ja: `ページへ適用するcssを指定します。`,
-                en: `Specify the CSS to apply to the page.`,
+                ja: `検出された対象を自動でブロックします。
+<span style="color: #f00">※この機能はbeta版です！！
+誤検知でも戸惑いなくブロックされます。</span>`,
+                en: `Automatically block detected targets.
+<span style="color: #f00">*This feature is in beta version! !
+Even false positives are blocked without hesitation.</span>`,
             },
-            data: CUSTOM_CSS,
-            _data: CUSTOM_CSS,
-            input: "textarea",
+            data: AUTO_BLOCK,
+            _data: AUTO_BLOCK,
+            input: "checkbox",
             advanced: true,
         },
         resetSetting: {
@@ -559,6 +621,64 @@ A larger value reduces the processing load but may potentially delay the initial
         },
     };
 
+    const LANGUAGE_DICT = {
+        ja: {
+            // 日本語
+            menu_warn: /* html */ `
+<small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
+<small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`,
+            menu_advanced: /* html */ `
+<summary>高度な設定</summary>`,
+            menu_error: "上記の設定内容の実行に失敗しました",
+            save: "保存",
+            close: "閉じる",
+            filter: "フィルター",
+            similarity: "類似度",
+            usageCount: "使用回数",
+            viewOriginalTweet: "元Tweetを見る",
+            sureReset: "本当にリセットを実行しますか？",
+
+            //hideComment
+            detectedElsewhere: "他で検出済",
+            authenticatedAccount: "認証垢",
+            unauthorizedLanguage: "非許可言語",
+            filterDetection: "フィルター検出",
+            emojiOnly: "絵文字のみ",
+            textDuplication: "文章の複製",
+            highUsage: "#多量使用",
+            selfCitation: "自身の引用",
+            recursiveDetection: "再帰的検出",
+        },
+        en: {
+            // 英語
+            menu_warn: /* html */ `
+<small style="color:#d00">If you have saved the changes, please refresh the page.</small><br>
+<small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`,
+            menu_advanced: /* html */ `
+<summary>Advanced settings</summary>`,
+            menu_error: "Failed to execute the above settings",
+            save: "Save",
+            close: "Close",
+            filter: "Filter",
+            similarity: "Similarity",
+            usageCount: "UsageCount",
+            viewOriginalTweet: "View original Tweet",
+            sureReset: "Are you sure you want to execute the reset?",
+
+            //hideComment
+            detectedElsewhere: "DetectedElsewhere",
+            authenticatedAccount: "AuthenticatedAccount",
+            unauthorizedLanguage: "UnauthorizedLanguage: ",
+            filterDetection: "FilterDetection",
+            emojiOnly: "EmojiOnly",
+            textDuplication: "TextDuplication",
+            highUsage: "#HighUsage",
+            selfCitation: "SelfCitation",
+            recursiveDetection: "RecursiveDetection",
+        },
+    }
+    let lang_dict = null;
+
     // グローバル変数
     let parentDOM = null;
     let parent_observer = null;
@@ -568,6 +688,7 @@ A larger value reduces the processing load but may potentially delay the initial
 
     const blacklist_reg = [];
     const whitelist_reg = [];
+    const blackNameList_reg = [];
     let allowLang_reg = /.*/;
     const msgDB = [];
     const msgDB_id = new Set();
@@ -659,8 +780,9 @@ A larger value reduces the processing load but may potentially delay the initial
                             SETTING_LIST[key].data = jsonData[key];
                         }
                     }
-                    log("設定読み込み...完了");
                 }
+                lang_dict = LANGUAGE_DICT[SETTING_LIST.language.data]
+                log("設定読み込み...完了");
             }
         }
 
@@ -671,8 +793,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
                 .split("\n");
-
-            for (let row of spText) {
+            spText.forEach(row => {
                 if (row.trim().length && !row.startsWith("!#")) {
                     try {
                         blacklist_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
@@ -682,15 +803,14 @@ A larger value reduces the processing load but may potentially delay the initial
                         SETTING_LIST.blackTextReg.isError = true;
                     }
                 }
-            }
+            });
 
             // ホワイトリスト
             spText = SETTING_LIST.whiteTextReg.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
                 .split("\n");
-
-            for (let row of spText) {
+            spText.forEach(row => {
                 if (row.trim().length && !row.startsWith("!#")) {
                     try {
                         whitelist_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
@@ -700,7 +820,24 @@ A larger value reduces the processing load but may potentially delay the initial
                         SETTING_LIST.whiteTextReg.isError = true;
                     }
                 }
-            }
+            });
+
+            spText = SETTING_LIST.blackNameReg.data
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+            spText.forEach(row => {
+                if (row.trim().length && !row.startsWith("!#")) {
+                    try {
+                        blackNameList_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
+                    }
+                    catch (e) {
+                        console.error(`[${PRO_NAME}]`, e);
+                        SETTING_LIST.blackNameReg.isError = true;
+                    }
+                }
+            });
+
 
             // 投稿の言語を制限
             try {
@@ -742,22 +879,8 @@ A larger value reduces the processing load but may potentially delay the initial
     function menu_init() {
         let w_exMenuDOM = document.createElement("div");
         let advanceDOM = document.createElement("details");
-        switch (SETTING_LIST.language.data) {
-            case "ja":
-                w_exMenuDOM.innerHTML = /* html */ `
-<small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
-<small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`;
-                advanceDOM.innerHTML = /* html */ `
-<summary>高度な設定</summary>`;
-                break;
-            case "en":
-                w_exMenuDOM.innerHTML = /* html */ `
-<small style="color:#d00">If you have saved the changes, please refresh the page.</small><br>
-<small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`;
-                advanceDOM.innerHTML = /* html */ `
-<summary>高度な設定</summary>`;
-                break;
-        }
+        w_exMenuDOM.innerHTML = lang_dict.menu_warn;
+        advanceDOM.innerHTML = lang_dict.menu_advanced;
         for (let key in SETTING_LIST) {
             let item = SETTING_LIST[key];
             // 入力欄作成
@@ -836,14 +959,7 @@ A larger value reduces the processing load but may potentially delay the initial
             if (item?.isError) {
                 let errDOM = document.createElement("p");
                 errDOM.classList.add(EX_MENU_ITEM_ERROR_CLASS);
-                switch (SETTING_LIST.language.data) {
-                    case "ja":
-                        errDOM.innerText = "上記の設定内容の実行に失敗しました";
-                        break;
-                    case "en":
-                        errDOM.innerText = "Failed to execute the above settings";
-                        break;
-                }
+                errDOM.innerText = lang_dict.menu_error;
                 div.appendChild(errDOM);
             }
 
@@ -861,25 +977,12 @@ A larger value reduces the processing load but may potentially delay the initial
             div.id = EX_MENU_ITEM_BASE_ID + "__btns";
             let btn_elem = document.createElement("input");
             btn_elem.type = "button";
-            switch (SETTING_LIST.language.data) {
-                case "ja":
-                    btn_elem.value = "保存";
-                    break;
-                case "en":
-                    btn_elem.value = "Save";
-            }
+            btn_elem.value = lang_dict.save;
             btn_elem.id = EX_MENU_ITEM_BASE_ID + "__save";
             div.appendChild(btn_elem);
             btn_elem = document.createElement("input");
             btn_elem.type = "button";
-            switch (SETTING_LIST.language.data) {
-                case "ja":
-                    btn_elem.value = "閉じる";
-                    break;
-                case "en":
-                    btn_elem.value = "Close";
-                    break;
-            }
+            btn_elem.value = lang_dict.close;
             btn_elem.id = EX_MENU_ITEM_BASE_ID + "__close";
             div.appendChild(btn_elem);
             w_exMenuDOM.appendChild(div);
@@ -1129,18 +1232,18 @@ A larger value reduces the processing load but may potentially delay the initial
         }
         // blacklist_id比較
         if (blacklist_id.has(messageData.id)) {
-            hideComment(messageData, "他で検出済");
+            hideComment(messageData, lang_dict.detectedElsewhere);
             return;
         }
         // 認証済アカウント強制ブロック
         if (SETTING_LIST.verifyBlock.data && messageData.verify) {
-            hideComment(messageData, "認証垢");
+            hideComment(messageData, lang_dict.authenticatedAccount);
             return;
         }
         // 投稿言語の制限
         for (let div of text_divs) {
             if (!allowLang_reg.test(div.lang)) {
-                hideComment(messageData, `<span title="${div.lang}">非許可言語</span>`);
+                hideComment(messageData, `<span title="${div.lang}">${lang_dict.unauthorizedLanguage}</span>`);
                 return;
             }
         }
@@ -1155,32 +1258,43 @@ A larger value reduces the processing load but may potentially delay the initial
                 addDB(messageData);
                 return;
             case 1:
-                // フィルターに反応
-                hideComment(messageData, `<span title="フィルター「/${ret[1]}/uim」">フィルター検出</span>`);
+                // コメントフィルターに反応
+                hideComment(messageData, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
                 return;
             case 2:
                 // 絵文字のみ(スパム)
-                hideComment(messageData, "絵文字のみ");
+                hideComment(messageData, `<span title="comment">${lang_dict.emojiOnly}</span>`);
                 return;
             case 3:
                 // コピペ
-                hideComment(messageData, `<span title="類似度:${(ret[1] * 10000 | 0) / 100}%">文章の複製</span>`);
+                hideComment(messageData, `<span title="comment_${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
                 return
             case 4:
                 // 異常なハッシュタグの使用
-                hideComment(messageData, `<span title="使用回数: ${ret[1]}">#多量使用</span>`);
+                hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
                 return;
             case 5:
                 // 自分自身の引用
-                hideComment(messageData, "自身の引用");
+                hideComment(messageData, lang_dict.selfCitation);
+                return;
+            case 6:
+                // 名前フィルターに反応
+                hideComment(messageData, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+                return;
+            case 7:
+                // 名前が絵文字のみ
+                hideComment(messageData, `<span title="name">${lang_dict.emojiOnly}</span>`)
                 return;
         }
     }
 
     function commentFilter(mesData) {
         let message = mesData.cleanStr;
-        if (!message.replace(spaceReg, "").length && !mesData.attach_img) {
+        if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !mesData.attach_img) {
             return [2];
+        }
+        if (SETTING_LIST.emojiOnryNameBlock.data && !message.replace(spaceReg, "").length) {
+            return [7];
         }
 
         // 引用リツイートしている場合
@@ -1191,11 +1305,24 @@ A larger value reduces the processing load but may potentially delay the initial
             }
         }
 
-        // フィルターによる検出
+        // コメントフィルターによる検出
         for (let reg of blacklist_reg) {
             if (reg[0].test(message)) {
                 return [1, reg[1]];
             }
+        }
+
+        // 名前フィルターによる検出
+        try {
+            let username = othToHira(mesData.name).replace(CrLfReg, " ");
+            for (let reg of blackNameList_reg) {
+                if (reg[0].test(username)) {
+                    return [6, reg[1]]
+                }
+            }
+        }
+        catch (e) {
+            console.error(e);
         }
 
         // 異常なハッシュタグの使用回数
@@ -1286,12 +1413,7 @@ A larger value reduces the processing load but may potentially delay the initial
             let div = document.createElement("div");
             div.classList.add(LOG_CLASS);
 
-            let bstw = "元Tweetを見る"
-            switch (SETTING_LIST.language.data) {
-                case "en":
-                    bstw = "View original Tweet";
-                    break;
-            }
+            let bstw = lang_dict.viewOriginalTweet;
 
             div.innerHTML = /* html */ `
 <span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a> </span>
@@ -1304,7 +1426,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 blockBtn.value = "Block";
                 div.firstElementChild.appendChild(blockBtn);
                 blockBtn.addEventListener("click", function () {
-                    menuClicker(BLOCK_QUERY_LIST, mesData)
+                    menuClicker(BLOCK_QUERY_LIST, mesData);
                 });
             }
             if (SETTING_LIST.visibleReportButton.data) {
@@ -1313,7 +1435,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 reportBtn.value = "Report";
                 div.firstElementChild.appendChild(reportBtn);
                 reportBtn.addEventListener("click", function () {
-                    menuClicker(REPORT_QUERY_LIST, mesData)
+                    menuClicker(REPORT_QUERY_LIST, mesData);
                 });
             }
             mesData.card.prepend(div);
@@ -1321,6 +1443,12 @@ A larger value reduces the processing load but may potentially delay the initial
         // 無駄な比較をしないように
         if (ch) {
             dbCommentBlock(mesData.id);
+
+            if (SETTING_LIST.autoBlock.data) {
+                console.log(`自動ブロック: ${mesData.name}(${mesData.id})
+理由: ${reason}`);
+                menuClicker(BLOCK_QUERY_LIST, mesData);
+            }
         }
     }
 
@@ -1332,7 +1460,7 @@ A larger value reduces the processing load but may potentially delay the initial
                 if (mData?.id == id) {
                     msgDB.splice(i, 1);
                     if (mData.base_url == oldUrl) {
-                        hideComment(mData, `再帰的検出`, false);
+                        hideComment(mData, lang_dict.recursiveDetection, false);
                     }
                 }
             }
@@ -1346,6 +1474,7 @@ A larger value reduces the processing load but may potentially delay the initial
             return;
         }
         mesData.menuDOM.click();
+        blacklist_id.delete(mesData.id);
         autoClick(list);
     }
 
@@ -1469,11 +1598,7 @@ A larger value reduces the processing load but may potentially delay the initial
     }
 
     function menuReset() {
-        let cf = "本当にリセットを実行しますか？";
-        switch (SETTING_LIST.language.data) {
-            case "en":
-                cf = "Are you sure you want to execute the reset?";
-        }
+        let cf = lang_dict.sureReset;
         if (confirm(cf)) {
             log("リセット処理実行");
             GM_deleteValue(SETTING_SAVE_KEY);
@@ -1549,19 +1674,19 @@ A larger value reduces the processing load but may potentially delay the initial
 
     // 不明な空白を半角スペースに
     function uspTosp(str) {
-        str = str.toString()
-        for (let reg of spaceRegList) {
+        str = str.toString();
+        spaceRegList.forEach(reg => {
             str = str.replace(reg, " ");
-        }
+        });
         return str;
     }
 
     //全ての文字を共通化
     function othToHira(str) {
         str = uspTosp(str);
-        for (let regs of othToHiraRegList) {
+        othToHiraRegList.forEach(regs => {
             str = str.replace(...regs);
-        }
+        });
         return str.toLowerCase();
     }
 
