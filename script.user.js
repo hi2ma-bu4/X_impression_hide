@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.3
+// @version             1.7.4
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -1259,7 +1259,7 @@ Even false positives are blocked without hesitation.</span>`,
                 return;
             case 1:
                 // コメントフィルターに反応
-                hideComment(messageData, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+                hideComment(messageData, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
                 return;
             case 2:
                 // 絵文字のみ(スパム)
@@ -1267,7 +1267,7 @@ Even false positives are blocked without hesitation.</span>`,
                 return;
             case 3:
                 // コピペ
-                hideComment(messageData, `<span title="comment_${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
+                hideComment(messageData, `<span title="${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
                 return
             case 4:
                 // 異常なハッシュタグの使用
