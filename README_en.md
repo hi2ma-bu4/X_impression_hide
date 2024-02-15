@@ -50,7 +50,7 @@ and you can open it.
 |Quick block button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.|true|boolean|
 |Quick report button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.<br>(Initial value is spam report)|true|boolean|
 |Maximum number of hashtags|It specifies the maximum number of hashtags allowed in a single post.|6|int (1~)|
-|Text similarity threshold|It specifies the threshold value for determining whether a text is a copied and pasted text.|0.8|float (0~1)|
+|Text similarity threshold|It specifies the threshold value for determining whether a text is a copied and pasted text.|0.85|float (0~1)|
 |Maximum text size for comparison|It specifies the maximum number of characters for text comparison in copied and pasted posts.[^4].<br>Increasing the value reduces the false positive rate but also reduces the detection rate.|80|int (0~)|
 |The minimum text size that is temporarily saved and compared|This specifies the minimum number of characters for the comparison text[^5].<br>Increasing the value reduces the false detection rate as well as the detection rate.|8|int (0~)|
 |The maximum number of posts that are temporarily saved|This specifies the number of comparison texts to be retained.<br>A smaller value reduces the processing load but also decreases the detection rate.|100|int (1~)|
