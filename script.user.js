@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.5
+// @version             1.7.6
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -80,6 +80,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const EMOJI_ONRY_NAME_BLOCK = true;
     const VERIFY_BLOCK = false;
     const VERIFY_ONRY_FILTER = false;
+    const FORMALITY_CARE_FILTER = true;
     const VISIBLE_BLOCK_BUTTON = true;
     const VISIBLE_REPORT_BUTTON = true;
     const AUTO_BLOCK = false;           // trueにしてはいけない(戒め)
@@ -109,10 +110,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const BLACK_NAME_REG = `!# 同上
 
 !# アラビア語のみで構成
-^[\\u0600-\\u07FF]+$
+^[\\u0600-\\u07FF ]+$
 `
 
-    const ALLOW_LANG = "ja|en|zh|qme|qam|und";
+    const ALLOW_LANG = "ja|en|es|zh|qme|qam|und";
     const MAX_SAVE_TEXT_SIZE = 80;
     const MIN_SAVE_TEXT_SIZE = 8;
     const MSG_RESEMBLANCE = 0.8;
@@ -138,6 +139,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const NAME_QUERY = `:not(span) > span > span`;
     const ID_QUERY = "div > span:not(:has(span))";
     const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
+    const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
     const IMAGE_QUERY = "a img";
     const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
     const MENU_DISP_QUERY = "[role=group] [role=menu]";
@@ -421,6 +423,21 @@ Regular accounts and accounts without verification badges will no longer be bloc
             },
             data: VERIFY_ONRY_FILTER,
             _data: VERIFY_ONRY_FILTER,
+            input: "checkbox",
+        },
+        formalityCare: {
+            name: {
+                ja: "認証公式アカウントを保護",
+                en: "Protect your authenticated official account",
+            },
+            explanation: {
+                ja: `公式アカウントを検知の対象から除外します。
+(公式とは青いバッジ以外を指します)`,
+                en: `Exclude official accounts from detection.
+(Official means anything other than the blue badge)`,
+            },
+            data: FORMALITY_CARE_FILTER,
+            _data: FORMALITY_CARE_FILTER,
             input: "checkbox",
         },
         visibleBlockButton: {
@@ -1089,6 +1106,7 @@ Even false positives are blocked without hesitation.</span>`,
             base_url: oldUrl,
             card: card_elem,
             verify: false,
+            formality: false,
             attach_img: false,
             reTweet: null,
             menuDOM: null,
@@ -1123,7 +1141,16 @@ Even false positives are blocked without hesitation.</span>`,
             // id取得(ついでに認証マーク判定)
             let id_span = div.querySelectorAll(ID_QUERY);
             id_span.forEach(span => {
-                let fc = span.querySelector(VERIFY_QUERY);
+                let fc = span.querySelector(VERIFY_FORMALITY_QUERY);
+                if (fc != null) {
+                    if (messageData._nsOneLoadFlag) {
+                        messageData.reTweet.formality = true;
+                    }
+                    else {
+                        messageData.formality = true;
+                    }
+                }
+                fc = span.querySelector(VERIFY_QUERY);
                 if (fc != null) {
                     if (messageData._nsOneLoadFlag) {
                         messageData.reTweet.verify = true;
@@ -1227,13 +1254,14 @@ Even false positives are blocked without hesitation.</span>`,
             addDB(messageData);
             return;
         }
-        if (SETTING_LIST.verifyOnryFilter.data && messageData.verify) {
-            addDB(messageData);
-            return;
-        }
         // blacklist_id比較
         if (blacklist_id.has(messageData.id)) {
             hideComment(messageData, lang_dict.detectedElsewhere);
+            return;
+        }
+        // 認証公式アカウント保護
+        if (SETTING_LIST.formalityCare.data && messageData.formality) {
+            addDB(messageData);
             return;
         }
         // 認証済アカウント強制ブロック
@@ -1398,6 +1426,11 @@ Even false positives are blocked without hesitation.</span>`,
     }
 
     function hideComment(mesData, reason, ch = true) {
+        // 認証済アカウントのみ判定
+        if (SETTING_LIST.verifyOnryFilter.data && !messageData.verify) {
+            addDB(messageData);
+            return;
+        }
         blacklist_id.add(mesData.id);
 
 
