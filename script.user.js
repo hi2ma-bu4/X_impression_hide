@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.8.2
+// @version             1.8.3
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -134,7 +134,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 可约
 `
 
-    const ALLOW_LANG = "ja|en|es|zh|qme|qam|und";
+    const ALLOW_LANG = "ja|en|es|zh|pt|qme|qam|und";
     const MAX_SAVE_TEXT_SIZE = 80;
     const MIN_SAVE_TEXT_SIZE = 8;
     const MSG_RESEMBLANCE = 0.85;
@@ -1186,6 +1186,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                     }
                     card_init()
                 }
+            }
+            else if (!document.getElementsByClassName(PARENT_CLASS)?.[0]) {
+                // class 検知
+                if (parent_observer) {
+                    parent_observer.disconnect();
+                    parent_observer = null;
+                }
+                card_init()
             }
             body_isWait = false;
             // 一応再実行
