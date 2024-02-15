@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.8
+// @version             1.7.9
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -659,6 +659,47 @@ Even false positives are blocked without hesitation.</span>`,
             input: "button",
             advanced: true,
         },
+        debug_viewBlacklist: {
+            name: {
+                ja: "blacklist表示",
+                en: "Blacklist display",
+            },
+            explanation: {
+                ja: `現在のblacklist_idをconsoleに出力する。`,
+                en: `Output current blacklist_id to console.`,
+            },
+            value: "output",
+            input: "button",
+            debug: true,
+        },
+        debug_viewMsgDB: {
+            name: {
+                ja: "MsgDB表示",
+                en: "MsgDB display",
+            },
+            explanation: {
+                ja: `現在のMsgDBをconsoleに出力する。`,
+                en: `Output current MsgDB to console.`,
+            },
+            value: "output",
+            input: "button",
+            debug: true,
+        },
+        debug_reInit: {
+            name: {
+                ja: "init再実行",
+                en: "init rerun",
+            },
+            explanation: {
+                ja: `強制的にDOM設定を再設定する。
+[ページ更新検知用処理待機時間(ms)]が仕事を放棄した際に使用。`,
+                en: `Force DOM settings to be reset.
+Used when [Processing wait time (in milliseconds) for page update detection] is abandoned.`,
+            },
+            value: "retry",
+            input: "button",
+            debug: true,
+        },
     };
 
     const LANGUAGE_DICT = {
@@ -669,6 +710,8 @@ Even false positives are blocked without hesitation.</span>`,
 <small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`,
             menu_advanced: /* html */ `
 <summary>高度な設定</summary>`,
+            menu_debug: /* html */ `
+<summary>デバッグ</summary>`,
             menu_error: "上記の設定内容の実行に失敗しました",
             save: "保存",
             close: "閉じる",
@@ -696,6 +739,8 @@ Even false positives are blocked without hesitation.</span>`,
 <small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`,
             menu_advanced: /* html */ `
 <summary>Advanced settings</summary>`,
+            menu_debug: /* html */ `
+<summary>Debug</summary>`,
             menu_error: "Failed to execute the above settings",
             save: "Save",
             close: "Close",
@@ -881,7 +926,10 @@ Even false positives are blocked without hesitation.</span>`,
 
             // 投稿の言語を制限
             try {
-                allowLang_reg = new RegExp(SETTING_LIST.allowLang.data.trim(), "i");
+                let text = SETTING_LIST.allowLang.data.trim();
+                if (text.length) {
+                    allowLang_reg = new RegExp(text, "i");
+                }
             }
             catch (e) {
                 console.error(e);
@@ -919,8 +967,10 @@ Even false positives are blocked without hesitation.</span>`,
     function menu_init() {
         let w_exMenuDOM = document.createElement("div");
         let advanceDOM = document.createElement("details");
+        let debugDOM = document.createElement("details");
         w_exMenuDOM.innerHTML = lang_dict.menu_warn;
         advanceDOM.innerHTML = lang_dict.menu_advanced;
+        debugDOM.innerHTML = lang_dict.menu_debug;
         for (let key in SETTING_LIST) {
             let item = SETTING_LIST[key];
             // 入力欄作成
@@ -1006,11 +1056,15 @@ Even false positives are blocked without hesitation.</span>`,
             if (item.advanced) {
                 advanceDOM.appendChild(div);
             }
+            else if (item.debug) {
+                debugDOM.appendChild(div);
+            }
             else {
                 w_exMenuDOM.appendChild(div);
             }
         }
         w_exMenuDOM.appendChild(advanceDOM);
+        w_exMenuDOM.appendChild(debugDOM);
         // 画面右下のボタン系
         {
             let div = document.createElement("div");
@@ -1035,6 +1089,12 @@ Even false positives are blocked without hesitation.</span>`,
 
     function card_init() {
         log("初期化中...")
+
+        let tmp = document.querySelector(OBS_QUERY);
+        if (tmp && tmp.classList.contains(PARENT_CLASS)) {
+            console.log("MutationObserverはすでに設定されています！");
+            return;
+        }
 
         // 表示待機
         waitForKeyElements(OBS_QUERY, function () {
@@ -1570,11 +1630,18 @@ Even false positives are blocked without hesitation.</span>`,
             // なければ複製して追加
             menu_elem = exMenuDOM.cloneNode(true);
             document.body.appendChild(menu_elem);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "__save").addEventListener("click", menuSave);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "__close").addEventListener("click", menuClose);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "__save")?.addEventListener("click", menuSave);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "__close")?.addEventListener("click", menuClose);
 
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "customCss").addEventListener("keydown", OnTabKey);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "resetSetting").addEventListener("click", menuReset);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "customCss")?.addEventListener("keydown", OnTabKey);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "resetSetting")?.addEventListener("click", menuReset);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_viewBlacklist")?.addEventListener("click", function () {
+                console.log(blacklist_id);
+            });
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_viewMsgDB")?.addEventListener("click", function () {
+                console.log(msgDB_id, msgDB)
+            });
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_reInit")?.addEventListener("click", card_init);
         }
         menu_elem.classList.add(EX_MENU_OPEN_CLASS);
         log("メニュー表示...完了");
@@ -1661,6 +1728,7 @@ Even false positives are blocked without hesitation.</span>`,
             location.reload();
         }
     }
+
 
     //####################################################################################################
 
