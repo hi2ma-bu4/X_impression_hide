@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.6
+// @version             1.7.7
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -101,6 +101,22 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# アラビア語のみで構成
 ^[\\u0600-\\u07FF]+$
+
+!# 中国語のなんかよく見るやつ
+^想上课的私信主人
+^太阳射不进来的地方
+^挂空就是舒服，接点地气
+^总说我下面水太多
+^在这个炮火连天的夜晚
+^只进入身体不进入生活
+^生活太多伪装，只能在推上面卸下伪装
+^生活枯燥无味，一个人的夜晚总想找个
+^我每天都有好好的穿衣服.*俘获
+^人不可能每一步都正确，我不想回头看，也不想批判当时的自己
+^如果你连试着的胆量也没有，你也就配不上拥有性福
+^我希望以后可以不用再送我回家，而是我们一起回我们的家
+^勇敢一点我们在.*就有故事
+^只要你主动一点点我们就会有机会.*线下
 `;
     const WHITE_TEXT_REG = `!# 同上
 
@@ -111,6 +127,12 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# アラビア語のみで構成
 ^[\\u0600-\\u07FF ]+$
+
+!# 中国語のなんかよく見るやつ
+反差
+私信领福利
+同城
+可约
 `
 
     const ALLOW_LANG = "ja|en|es|zh|qme|qam|und";
