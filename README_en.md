@@ -46,6 +46,7 @@ and you can open it.
 |Prohibit emoji usernames|Hide usernames composed only of emojis.|true|boolean|
 |Prohibition of authenticated accounts|It indiscriminately hides authenticated accounts.|false|boolean|
 |Authenticate accounts only|It detects only authenticated accounts.<br>Regular accounts and accounts without verification badges will no longer be blocked.|false|boolean|
+|Protect your authenticated official account|Exclude official accounts[^7] from detection.|true|boolean|
 |Quick block button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.|true|boolean|
 |Quick report button display|Displays a button that allows you to block with one click.<br>It will only appear on detected posts.<br>(Initial value is spam report)|true|boolean|
 |Maximum number of hashtags|It specifies the maximum number of hashtags allowed in a single post.|6|int (1~)|
@@ -65,6 +66,7 @@ and you can open it.
 [^4]: If your post's character count is less than or equal to the maximum value, this value will not be used.
 [^5]: If it is larger than [Maximum text size for comparison], the comparison process will not be performed.
 [^6]: This feature is in beta version! !<br>Even false positives are blocked without hesitation.
+[^7]: Official means anything other than the blue badge.
 
 
 ### If there is a configuration mistake or a configuration update misalignment due to a version upgrade.
