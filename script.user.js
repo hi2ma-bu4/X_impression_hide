@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.4
+// @version             1.7.5
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -137,6 +137,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const NAME_SPACE_QUERY = `[data-testid="User-Name"]`;
     const NAME_QUERY = `:not(span) > span > span`;
     const ID_QUERY = "div > span:not(:has(span))";
+    const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
     const IMAGE_QUERY = "a img";
     const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
     const MENU_DISP_QUERY = "[role=group] [role=menu]";
@@ -1122,8 +1123,8 @@ Even false positives are blocked without hesitation.</span>`,
             // id取得(ついでに認証マーク判定)
             let id_span = div.querySelectorAll(ID_QUERY);
             id_span.forEach(span => {
-                let fc = span?.firstChild;
-                if (fc?.tagName == "svg") {
+                let fc = span.querySelector(VERIFY_QUERY);
+                if (fc != null) {
                     if (messageData._nsOneLoadFlag) {
                         messageData.reTweet.verify = true;
                     }
