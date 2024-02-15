@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.7.9
+// @version             1.8.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -47,9 +47,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 */
 /* todo
+・親ツイートの分別・判定
 ・検知率を上げる
-    ・連投の検知
-        ・親ツイートの分別・判定
     ・あやしい日本語の検知(多分自分の実力じゃ無理)
     ・フィルターをもっと有能に
 ・誤検知を減らす(今はまだいい？)
@@ -141,6 +140,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const MSG_RESEMBLANCE = 0.85;
     const MAX_SAVE_LOG_SIZE = 100;
     const MAX_HASHTAG_COUNT = 6;
+    const MAX_CONTRIBUTION_COUNT = 1;
 
     const PRO_NAME = "X_impression_hide";
     const BODY_OBS_TIMEOUT = 3000;
@@ -508,6 +508,24 @@ It will only appear on detected posts.
             input: "number",
             min: 1,
         },
+        maxContributtonCount: {
+            name: {
+                ja: "ツリー返信上限数",
+                en: "Maximum number of tree replies",
+            },
+            explanation: {
+                ja: `1つの投稿ツリーでの返信上限数を指定します。
+値は許可のラインです。(例: 1で2投稿以上は非表示)
+0を指定するとこの設定は無効化されます。`,
+                en: `Specify the maximum number of replies in one post tree.
+The value is the line of permission. (Example: 1 hides 2 or more posts)
+Specifying 0 disables this setting.`,
+            },
+            data: MAX_CONTRIBUTION_COUNT,
+            _data: MAX_CONTRIBUTION_COUNT,
+            input: "number",
+            min: 0,
+        },
         msgResemblance: {
             name: {
                 ja: "文章類似度許可ライン",
@@ -725,6 +743,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             detectedElsewhere: "他で検出済",
             authenticatedAccount: "認証垢",
             unauthorizedLanguage: "非許可言語",
+            contributtonCount: "連投",
             filterDetection: "フィルター検出",
             emojiOnly: "絵文字のみ",
             textDuplication: "文章の複製",
@@ -754,6 +773,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             detectedElsewhere: "DetectedElsewhere",
             authenticatedAccount: "AuthenticatedAccount",
             unauthorizedLanguage: "UnauthorizedLanguage: ",
+            contributtonCount: "doubleTexting",
             filterDetection: "FilterDetection",
             emojiOnly: "EmojiOnly",
             textDuplication: "TextDuplication",
@@ -1358,6 +1378,21 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 return;
             }
         }
+        // 連投検出
+        if (SETTING_LIST.maxContributtonCount.data > 0 && msgDB_id.has(messageData.id)) {
+            let bu = messageData.base_url;
+            let id = messageData.id;
+            let cou = 0;
+            for (let md of msgDB) {
+                if (md.id == id && md.base_url == bu) {
+                    cou++;
+                }
+            }
+            if (SETTING_LIST.maxContributtonCount.data <= cou) {
+                hideComment(messageData, `${lang_dict.contributtonCount}`);
+                return;
+            }
+        }
 
         let ret = commentFilter(messageData);
         switch (ret[0]) {
@@ -1404,7 +1439,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !mesData.attach_img) {
             return [2];
         }
-        if (SETTING_LIST.emojiOnryNameBlock.data && !message.replace(spaceReg, "").length) {
+        if (SETTING_LIST.emojiOnryNameBlock.data && !mesData.name?.replace(spaceReg, "")?.length) {
+            mesData.name = mesData.id;
             return [7];
         }
 
@@ -1424,16 +1460,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }
 
         // 名前フィルターによる検出
-        try {
-            let username = othToHira(mesData.name).replace(CrLfReg, " ");
-            for (let reg of blackNameList_reg) {
-                if (reg[0].test(username)) {
-                    return [6, reg[1]]
-                }
+        let username = othToHira(mesData.name).replace(CrLfReg, " ");
+        for (let reg of blackNameList_reg) {
+            if (reg[0].test(username)) {
+                return [6, reg[1]]
             }
-        }
-        catch (e) {
-            console.error(e);
         }
 
         // 異常なハッシュタグの使用回数
