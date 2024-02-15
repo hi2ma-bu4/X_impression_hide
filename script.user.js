@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.8.1
+// @version             1.8.2
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -140,7 +140,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const MSG_RESEMBLANCE = 0.85;
     const MAX_SAVE_LOG_SIZE = 100;
     const MAX_HASHTAG_COUNT = 6;
-    const MAX_CONTRIBUTION_COUNT = 1;
+    const MAX_CONTRIBUTION_COUNT = 2;
 
     const PRO_NAME = "X_impression_hide";
     const BODY_OBS_TIMEOUT = 3000;
@@ -1378,21 +1378,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 return;
             }
         }
-        // 連投検出
-        if (SETTING_LIST.maxContributtonCount.data > 0 && msgDB_id.has(messageData.id)) {
-            let bu = messageData.base_url;
-            let id = messageData.id;
-            let cou = 0;
-            for (let md of msgDB) {
-                if (md.id == id && md.base_url == bu) {
-                    cou++;
-                }
-            }
-            if (SETTING_LIST.maxContributtonCount.data <= cou) {
-                hideComment(messageData, `${lang_dict.contributtonCount}`);
-                return;
-            }
-        }
 
         let ret = commentFilter(messageData);
         switch (ret[0]) {
@@ -1400,6 +1385,21 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 // 取得,判定済投稿
                 return;
             case 0:
+                // 連投検出
+                if (SETTING_LIST.maxContributtonCount.data > 0 && msgDB_id.has(messageData.id)) {
+                    let bu = messageData.base_url;
+                    let id = messageData.id;
+                    let cou = 0;
+                    for (let md of msgDB) {
+                        if (md.id == id && md.base_url == bu) {
+                            cou++;
+                        }
+                    }
+                    if (SETTING_LIST.maxContributtonCount.data <= cou) {
+                        hideComment(messageData, `${lang_dict.contributtonCount}`);
+                        return;
+                    }
+                }
                 // 問題なし
                 addDB(messageData);
                 return;
