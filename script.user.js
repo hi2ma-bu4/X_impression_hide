@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.8.4
+// @version             1.8.5
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -13,11 +13,9 @@
 // @description:zh-TW   用於隱藏、封鎖和報告 Twitter 上的垃圾郵件的工具。
 // @author              tromtub(snows)
 // @license             GPL-3.0
-// @match               https://twitter.com/*
-// @match               http://twitter.com/*
+// @match               *://twitter.com/*
+// @match               *://x.com/*
 // @icon                data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB7ElEQVR4Ae1XMZLCMAwUdw0ldJQ8ATpKnkBJByUd8ALyA/gBdJTQUtHS8QT4AaRM5ctmThmfogQ75CYNmhGTbGJr45Vk0yAiQzXaF9VsHwIZAofDgYwxqo9GI/K16/X6cqyxvdVqmdvtZh6PhwmCIHXcw7vdrpFj8ny9XhsYxhe8lwWHw2EycLFYpNh0Ok2w8/nsFHy1WrkE1wnAN5tNMkGv10ux3W6XIab5fD5P3ovldCGrP2Ap4LiW8uRJAcIwe1wpArYU0FJimhQgxaQ9cqX4BZYCgSVmS8HBfRP1JQEsY1xKGSmAcTC+l0QrIWDraicVMBBA4O1265ScpQnAMbkMwphjub1HAI7EkxoDK7n0/gQQGATsCmDMo+z++Hf8E5CjPZ9PiqKIZrMZhWFIl8slxcbjMTWbTTqdTuRrXoz5i2WXRIL+WxWw2+Uml13rnJUT4K9E9nMFaF3SxiojoO1u2rJzl4z3/+oIcHBMLiUp2rDe3ozg+BIYtNee87KjGzLGndPx7JD/0K7xog2Gl30ymaSY1jm9CPhsrXnnBK1zOhHgCWWtF7l2TtA6p3S1E+73exoMBrRcLul4PJKL3e93arfbSUeMA1O/36eYPHU6nWQu7pyaqRlfZnezV05anhSN34va7PPXrHYCP+VaTG3LBV1KAAAAAElFTkSuQmCC
-// @updateURL           https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
-// @downloadURL         https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @supportURL          https://github.com/hi2ma-bu4/X_impression_hide
 // @supportURL          https://greasyfork.org/ja/scripts/484303-twitter-旧-𝕏-のインプレッション小遣い稼ぎ野郎どもをdisplay-none-するやつ
 // @compatible          chrome
@@ -31,6 +29,8 @@
 // @grant               GM.registerMenuCommand
 // @run-at              document-idle
 // @noframes
+// @downloadURL https://update.greasyfork.org/scripts/484303/Twitter%28%E6%97%A7%3A%F0%9D%95%8F%29%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display%3Anone%3B%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4.user.js
+// @updateURL https://update.greasyfork.org/scripts/484303/Twitter%28%E6%97%A7%3A%F0%9D%95%8F%29%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display%3Anone%3B%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4.meta.js
 // ==/UserScript==
 
 
@@ -96,6 +96,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# chatGPTのエラーメッセージを取り敢えず対処
 ^申し訳ありません.*?(過激な表現や性的な内容|不適切なコンテンツや言葉).*?他の(質問や話題|トピックで質問)があれば.*?。$
 
+!# chatGPT構文
+ですね!.*(です|ね)。$
+
 !# タイ語のハッシュタグを含む場合
 #[\\u0E00-\\u0F7F]+
 
@@ -135,11 +138,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 可约
 `
 
+    //プロフィールメッセージフィルター機能を作る
+    //Bimbo
+
     const ALLOW_LANG = "ja|en|es|zh|pt|qme|qam|und";
     const MAX_SAVE_TEXT_SIZE = 80;
     const MIN_SAVE_TEXT_SIZE = 8;
     const MSG_RESEMBLANCE = 0.85;
-    const MAX_SAVE_LOG_SIZE = 100;
+    const MAX_SAVE_LOG_SIZE = 150;
     const MAX_HASHTAG_COUNT = 6;
     const MAX_CONTRIBUTION_COUNT = 2;
 
@@ -259,7 +265,8 @@ display: none;
     height: 8em;
     max-height: 25em;
     tab-size: 4;
-    white-space: nowrap;
+    white-space: pre;
+    font-size: 0.89em;
 }
 #${EX_MENU_ID} input[type=text] {
     width: 95%;
@@ -852,6 +859,43 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     ];
     const CrLfReg = /[\r\n]/gu;
     const spaceReg = / /g;
+
+    // 使用ブラウザ種類
+    const ua = navigator.userAgent.toLowerCase();
+    let bs = "";
+    let ieVersion = 0;
+    switch (true) {
+        case /fbios|fb_iab/.test(ua): // Facebook
+            bs = "Facebook";
+            break;
+        case /instagram/.test(ua): // Instagram
+            bs = "Instagram";
+            break;
+        case / line\//.test(ua): // LINE
+            bs = "LINE";
+            break;
+        case /msie/.test(ua): // IE ~11
+            ieVersion = parseInt(/msie (\d+)/.exec(ua)[1]);
+        case /trident/.test(ua): // IE 11~
+            bs = "Internet Explorer";
+            break;
+        case /edge/.test(ua):
+        case /edg/.test(ua):
+            bs = "Edge";
+            break;
+        case /chrome|crios/.test(ua): // Chrome for iOS
+            bs = "Chrome";
+            break;
+        case /safari/.test(ua):
+            bs = "Safari";
+            break;
+        case /firefox/.test(ua):
+            bs = "Firefox";
+            break;
+        case /opera|opr/.test(ua):
+            bs = "Opera";
+            break;
+    }
 
     log("起動中...");
 
