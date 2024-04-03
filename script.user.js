@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.1
+// @version             1.9.2
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -871,7 +871,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     const msgDB_id = new Set();
     const blacklist_id = new Set();
 
+
     let levenshteinDistanceUseFlag = true;
+    let stopFlag = false;
 
     // ページ変更確認に使用
     let body_isReservation = false;
@@ -1286,10 +1288,16 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         if (url.startsWith("/")) {
             let urls = url.replace(/\?/, "/").split("/")
             let uid = urls?.[1] ?? urls[0];
-            if (uid && uid != "home" && uid != "search") {
+            if (["home", "search"].includes(uid)) {
+                stopFlag = true;
+                console.log("stop!")
+                return;
+            }
+            if (uid) {
                 uid = "@" + uid;
                 log(`親投稿者: ${uid}`);
                 parent_id = uid;
+                stopFlag = false;
                 // 気分で消しとく
                 blacklist_id.delete(uid);
             }
@@ -1570,7 +1578,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                         for (let md of msgDB) {
                             if (md.base_url == bu && md.reTweet?.id == rt) {
                                 cou++;
-                                if (!(md.id in us)) {
+                                if (!(us.has(md.id))) {
                                     us.add(md.id);
                                     usd.push(md);
                                 }
@@ -1732,6 +1740,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     function hideComment(mesData, reason, ch = true) {
+        // TLTW以外では大人しく
+        if (stopFlag) {
+            addDB(messageData);
+            return;
+        }
         // 認証済アカウントのみ判定
         if (SETTING_LIST.verifyOnryFilter.data && !messageData.verify) {
             addDB(messageData);
