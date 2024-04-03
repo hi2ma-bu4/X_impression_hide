@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.8.5
+// @version             1.9.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -88,7 +88,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
 !# プロフィールメッセージを異常に推してる人
-(はじめまして|こんにち[はわ]).*?ぷろふ
+((初|はじ)めまして|こんにち[はわ]|こんばん[はわ]|やっほ|[き気]になった|良かったら).*?ぷろふ
+ぷろふぃーるの確認を
+(^(連絡|絡み)|[→⇒➡]).*(よろ|おねがいします|返事)
 
 !# chatGPTが時々やらかす濁点半濁点問題を流用
 [\\u3099\\u309a]
@@ -103,7 +105,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 #[\\u0E00-\\u0F7F]+
 
 !# アラビア語のみで構成
-^[\\u0600-\\u07FF]+$
+^[\\u0600-\\u07FF ]+$
 
 !# 中国語のなんかよく見るやつ
 ^想上课的私信主人
@@ -126,6 +128,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# 例としてMisskey構文に対応してみる
 ^:[a-z0-9\-_]:$
 `;
+    /*
+        const BLACK_RT_TEXT_REG = `!# 同上
+    
+    !# 英語の動画宣伝RTの構文
+    (vid|video).*free
+    free.*(vid|video)
+    `;
+    */
     const BLACK_NAME_REG = `!# 同上
 
 !# アラビア語のみで構成
@@ -136,7 +146,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 私信领福利
 同城
 可约
-`
+`;
 
     //プロフィールメッセージフィルター機能を作る
     //Bimbo
@@ -148,6 +158,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const MAX_SAVE_LOG_SIZE = 150;
     const MAX_HASHTAG_COUNT = 6;
     const MAX_CONTRIBUTION_COUNT = 2;
+    const MAX_RT_COUNT = 1;
+    const MAX_SAME_RT_COUNT = 1;
 
     const PRO_NAME = "X_impression_hide";
     const BODY_OBS_TIMEOUT = 3000;
@@ -225,8 +237,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     display: none;
 }
 
-.${HIDE_CLASS}:has(.${LOG_CLASS}):not(:has([lang])) {
-display: none;
+.${HIDE_CLASS}:has(.${LOG_CLASS}):not(:has(article)) {
+    display: none;
 }
 
 /* 検出内容の表示設定 */
@@ -358,6 +370,21 @@ The specification method is the same as [Prohibited expressions].`,
             _data: WHITE_TEXT_REG,
             input: "textarea",
         },
+        /*blackRtTextReg: {
+            name: {
+                ja: "禁止するRT表現",
+                en: "Prohibited RT expressions",
+            },
+            explanation: {
+                ja: `非表示にするRT元テキストを指定します。
+指定方法などは[禁止する表現]と同じです。`,
+                en: `Specify the RT source text to hide.
+The specification method is the same as [Prohibited expressions].`,
+            },
+            data: BLACK_RT_TEXT_REG,
+            _data: BLACK_RT_TEXT_REG,
+            input: "textarea",
+        },*/
         blackNameReg: {
             name: {
                 ja: "禁止する名前",
@@ -531,6 +558,38 @@ Specifying 0 disables this setting.`,
             },
             data: MAX_CONTRIBUTION_COUNT,
             _data: MAX_CONTRIBUTION_COUNT,
+            input: "number",
+            min: 0,
+        },
+        maxRtCount: {
+            name: {
+                ja: "1人によるRT上限数",
+                en: "Maximum number of RTs by one person",
+            },
+            explanation: {
+                ja: `1つの投稿ツリーでの1ユーザーの引用RT返信上限数を指定します。
+値は[ツリー返信上限数]と同じ指定方法です。`,
+                en: `Specify the maximum number of quote RT replies for one user in one post tree.
+The value is specified in the same way as [Maximum number of tree replies].`,
+            },
+            data: MAX_RT_COUNT,
+            _data: MAX_RT_COUNT,
+            input: "number",
+            min: 0,
+        },
+        maxSameRtCount: {
+            name: {
+                ja: "同一RT上限数",
+                en: "Maximum number of same RTs",
+            },
+            explanation: {
+                ja: `1つの投稿ツリーでの複数人からの同じユーザーに対する引用RT返信上限数を指定します。
+値は[ツリー返信上限数]と同じ指定方法です。`,
+                en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
+The value is specified in the same way as [Maximum number of tree replies].`,
+            },
+            data: MAX_SAME_RT_COUNT,
+            _data: MAX_SAME_RT_COUNT,
             input: "number",
             min: 0,
         },
@@ -752,6 +811,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             authenticatedAccount: "認証垢",
             unauthorizedLanguage: "非許可言語",
             contributtonCount: "連投",
+            rtContributtonCount: "RT連投",
+            rtSharingSeries: "RT共有連投",
             filterDetection: "フィルター検出",
             emojiOnly: "絵文字のみ",
             textDuplication: "文章の複製",
@@ -782,6 +843,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             authenticatedAccount: "AuthenticatedAccount",
             unauthorizedLanguage: "UnauthorizedLanguage: ",
             contributtonCount: "doubleTexting",
+            rtContributtonCount: "rtDoubleTexting",
+            rtSharingSeries: "rtSharingSeries",
             filterDetection: "FilterDetection",
             emojiOnly: "EmojiOnly",
             textDuplication: "TextDuplication",
@@ -801,6 +864,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
     const blacklist_reg = [];
     const whitelist_reg = [];
+    //const blackRtList_reg = [];
     const blackNameList_reg = [];
     let allowLang_reg = /.*/;
     const msgDB = [];
@@ -860,6 +924,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     const CrLfReg = /[\r\n]/gu;
     const spaceReg = / /g;
 
+    /* 必要なくなったのでコメントアウト
     // 使用ブラウザ種類
     const ua = navigator.userAgent.toLowerCase();
     let bs = "";
@@ -896,6 +961,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             bs = "Opera";
             break;
     }
+    */
 
     log("起動中...");
 
@@ -938,7 +1004,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
         // フィルター正規表現設定
         {
-            // ブラックリスト
+            // ブラック表現リスト
             let spText = SETTING_LIST.blackTextReg.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
@@ -955,7 +1021,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 }
             });
 
-            // ホワイトリスト
+            // ホワイト表現リスト
             spText = SETTING_LIST.whiteTextReg.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
@@ -972,6 +1038,26 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 }
             });
 
+            /*
+            // ブラックRT表現リスト
+            spText = SETTING_LIST.blackRtTextReg.data
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+            spText.forEach(row => {
+                if (row.trim().length && !row.startsWith("!#")) {
+                    try {
+                        blackRtList_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
+                    }
+                    catch (e) {
+                        console.error(`[${PRO_NAME}]`, e);
+                        SETTING_LIST.blackRtTextReg.isError = true;
+                    }
+                }
+            });
+            */
+
+            // ブラック名前リスト
             spText = SETTING_LIST.blackNameReg.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
@@ -1196,7 +1282,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
     // メッセージの親を取得
     function setParentId() {
-        let url = oldUrl.replace(/https?:\/\/twitter.com/, "");
+        let url = oldUrl.replace(/https?:\/\/.*?\.com/, "");
         if (url.startsWith("/")) {
             let urls = url.replace(/\?/, "/").split("/")
             let uid = urls?.[1] ?? urls[0];
@@ -1361,30 +1447,32 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         // メッセージ取得
         let text_divs = article.querySelectorAll("div[lang]");
         let text_div = text_divs?.[0];
-        if (!text_div) {
-            return;
-        }
 
         let fullStr = "";
         let str = "";
         let emojiLst = [];
-        let tmp;
-        text_div.childNodes.forEach(elem => {
-            switch (elem.tagName) {
-                case "SPAN":
-                    tmp = elem.innerText
-                    str += tmp;
-                    fullStr += tmp;
-                    break;
-                case "IMG":
-                    tmp = elem.alt;
-                    emojiLst.push(tmp);
-                    fullStr += tmp;
-                    break;
-                default:
-                    break;
-            }
-        });
+        if (text_div) {
+            let tmp;
+            text_div.childNodes.forEach(elem => {
+                switch (elem.tagName) {
+                    case "SPAN":
+                        tmp = elem.innerText
+                        str += tmp;
+                        fullStr += tmp;
+                        break;
+                    case "IMG":
+                        tmp = elem.alt;
+                        emojiLst.push(tmp);
+                        fullStr += tmp;
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
+        else {
+            messageData._notTextDiv = true;
+        }
 
         messageData.full = fullStr;
         messageData.str = str;
@@ -1438,19 +1526,64 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 // 取得,判定済投稿
                 return;
             case 0:
-                // 連投検出
-                if (SETTING_LIST.maxContributtonCount.data > 0 && msgDB_id.has(messageData.id)) {
+                let id = messageData.id;
+                if (msgDB_id.has(id)) {
                     let bu = messageData.base_url;
-                    let id = messageData.id;
-                    let cou = 0;
-                    for (let md of msgDB) {
-                        if (md.id == id && md.base_url == bu) {
-                            cou++;
+                    // 連投検出
+                    if (SETTING_LIST.maxContributtonCount.data > 0) {
+                        let cou = 0;
+                        for (let md of msgDB) {
+                            if (md.id == id && md.base_url == bu) {
+                                cou++;
+                            }
+                        }
+                        if (SETTING_LIST.maxContributtonCount.data <= cou) {
+                            hideComment(messageData, `${lang_dict.contributtonCount}`);
+                            return;
                         }
                     }
-                    if (SETTING_LIST.maxContributtonCount.data <= cou) {
-                        hideComment(messageData, `${lang_dict.contributtonCount}`);
-                        return;
+                    // RT連投検出
+                    if (SETTING_LIST.maxRtCount.data > 0 && messageData.reTweet) {
+                        let cou = 0;
+                        let rtl = new Set(messageData.reTweet.id);
+                        for (let md of msgDB) {
+                            if (md.id == id && md.base_url == bu && md.reTweet) {
+                                cou++;
+                                rtl.add(md.reTweet.id)
+                            }
+                        }
+                        if (SETTING_LIST.maxRtCount.data <= cou) {
+                            hideComment(messageData, `${lang_dict.rtContributtonCount}`);
+                            // 引用先も一応抹消
+                            for (let rt of rtl) {
+                                blacklist_id.add(rt);
+                            }
+                            return;
+                        }
+                    }
+                    // 同一ユーザーRT検出
+                    if (SETTING_LIST.maxSameRtCount.data > 0 && messageData.reTweet) {
+                        let rt = messageData.reTweet.id;
+                        let cou = 0;
+                        let us = new Set(id);
+                        let usd = [messageData];
+                        for (let md of msgDB) {
+                            if (md.base_url == bu && md.reTweet?.id == rt) {
+                                cou++;
+                                if (!(md.id in us)) {
+                                    us.add(md.id);
+                                    usd.push(md);
+                                }
+                            }
+                        }
+                        if (SETTING_LIST.maxRtCount.data <= cou) {
+                            for (let td of usd) {
+                                hideComment(td, `${lang_dict.rtSharingSeries}`);
+                            }
+                            // 引用先も一応抹消
+                            blacklist_id.add(rt);
+                            return;
+                        }
                     }
                 }
                 // 問題なし
@@ -1488,6 +1621,13 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     function commentFilter(mesData) {
+        // 無言で無言の引用リツイートしている場合
+        if (mesData.reTweet && mesData._notTextDiv) {
+            // 自分自身の場合
+            if (SETTING_LIST.oneselfRetweetBlock.data && mesData.reTweet.id == mesData.id) {
+                return [5];
+            }
+        }
         let message = mesData.cleanStr;
         if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !mesData.attach_img) {
             return [2];
@@ -1579,11 +1719,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     function addDB(mesData) {
-        // 短いと誤爆するため
+        msgDB_id.add(mesData.id);
+        /*// 短いと誤爆するため
         if (mesData.str_len < SETTING_LIST.minSaveTextSize.data) {
             return;
-        }
-        msgDB_id.add(mesData.id);
+        }*/
         if (msgDB.length > SETTING_LIST.maxSaveLogSize.data) {
             msgDB.shift();
         }
@@ -1598,7 +1738,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             return;
         }
         blacklist_id.add(mesData.id);
-
 
         // フィルターによる検出
         for (let reg of whitelist_reg) {
