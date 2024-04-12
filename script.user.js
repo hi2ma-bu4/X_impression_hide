@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.3
+// @version             1.9.4
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -77,15 +77,18 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     // 初期値(定数)
     const LANGUAGE = "ja";
     const VISIBLE_LOG = true;
+    const VISIBLE_VERIFY_LOG = true;
     const ONESELF_RETWEET_BLOCK = true;
     const EMOJI_ONRY_BLOCK = true;
     const EMOJI_ONRY_NAME_BLOCK = true;
     const VERIFY_BLOCK = false;
+    const VERIFY_RT_BLOCK = false;
     const VERIFY_ONRY_FILTER = false;
     const FORMALITY_CARE_FILTER = true;
     const VISIBLE_BLOCK_BUTTON = true;
     const VISIBLE_REPORT_BUTTON = true;
     const AUTO_BLOCK = false;           // trueにしてはいけない(戒め)
+    const AUTO_OPEN_SETTING_MENU = false;
 
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
@@ -102,6 +105,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# chatGPT構文
 ですね!.*(です|ね)。$
+されましたね!.*(です|ね)[!。]$
 
 !# タイ語のハッシュタグを含む場合
 #[\\u0E00-\\u0F7F]+
@@ -143,6 +147,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# アラビア語のみで構成
 ^[\\u0600-\\u07FF ]+$
 
+!# ヒンディー語のみで構成
+^[\\u0900-\\u097F ]+$
+
 !# 中国語のなんかよく見るやつ
 反差
 私信领福利
@@ -171,6 +178,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const CHECK_CLASS = PRO_NAME + "_check";
     const HIDE_CLASS = PRO_NAME + "_none";
     const LOG_CLASS = PRO_NAME + "_log";
+    const VERIFY_CLASS = PRO_NAME + "_verify";
     const EX_MENU_ID = PRO_NAME + "_menu";
     const EX_MENU_OPEN_CLASS = EX_MENU_ID + "_open";
     const EX_MENU_ITEM_BASE_ID = EX_MENU_ID + "_item_";
@@ -196,6 +204,15 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
         "[role=group]:has([role=radiogroup]) div[role=button]:not(:has(svg))",
         ["[role=group] div[role=button]:not(:has(svg))", 1],
     ];
+
+    const VERIFY_SVG = `
+    <svg class="${VERIFY_CLASS}" viewBox="0 0 22 22" role="img" data-testid="icon-verified">
+        <g>
+            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z">
+            </path>
+        </g>
+    </svg>
+`;
 
     const BASE_CSS = /* css */ `
 #${EX_MENU_ID} {
@@ -272,6 +289,17 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     background-color: rgba(29, 155, 240, .5);
 }
 
+.${VERIFY_CLASS} {
+    max-width: 20px;
+    max-height: 20px;
+    color: rgb(29, 155, 240);
+    fill: currentcolor;
+    user-select: none;
+    height: 1.25em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 /* メニュー表示設定 */
 #${EX_MENU_ID} textarea {
     width: 95%;
@@ -333,6 +361,21 @@ The screen will be peaceful, but the reasons for hiding the posts and the origin
             },
             data: VISIBLE_LOG,
             _data: VISIBLE_LOG,
+            input: "checkbox",
+        },
+        visibleVerifyLog: {
+            name: {
+                ja: "非表示ログに認証マーク表示",
+                en: "Certification mark displayed on hidden log",
+            },
+            explanation: {
+                ja: `非表示にしたログの名前の後ろに認証マークを追加します。
+企業バッジでも青バッジで表示されます。`,
+                en: `Adds a certification mark after the name of the hidden log.
+Corporate badges are also displayed as blue badges.`,
+            },
+            data: VISIBLE_VERIFY_LOG,
+            _data: VISIBLE_VERIFY_LOG,
             input: "checkbox",
         },
         blackTextReg: {
@@ -467,6 +510,19 @@ The description should be written using regular expressions (between the / chara
             },
             data: VERIFY_BLOCK,
             _data: VERIFY_BLOCK,
+            input: "checkbox",
+        },
+        verifyRtBlock: {
+            name: {
+                ja: "認証RT禁止",
+                en: "Authentication RT prohibited",
+            },
+            explanation: {
+                ja: `認証済アカウント投稿に対する引用RTを非表示にします。`,
+                en: `Hide quoted RTs for authenticated account posts.`,
+            },
+            data: VERIFY_RT_BLOCK,
+            _data: VERIFY_RT_BLOCK,
             input: "checkbox",
         },
         verifyOnryFilter: {
@@ -746,6 +802,20 @@ Even false positives are blocked without hesitation.</span>`,
             input: "button",
             advanced: true,
         },
+        debug_viewSettingMenu: {
+            name: {
+                ja: "起動時設定自動表示",
+                en: "Automatic display of settings at startup",
+            },
+            explanation: {
+                ja: `設定画面を自動で開く`,
+                en: `Automatically open the settings screen`,
+            },
+            input: "checkbox",
+            data: AUTO_OPEN_SETTING_MENU,
+            _data: AUTO_OPEN_SETTING_MENU,
+            debug: true,
+        },
         debug_viewBlacklist: {
             name: {
                 ja: "blacklist表示",
@@ -811,6 +881,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             //hideComment
             detectedElsewhere: "他で検出済",
             authenticatedAccount: "認証垢",
+            verifyRtBlock: "認証RT垢",
             unauthorizedLanguage: "非許可言語",
             contributtonCount: "連投",
             rtContributtonCount: "RT連投",
@@ -843,6 +914,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             //hideComment
             detectedElsewhere: "DetectedElsewhere",
             authenticatedAccount: "AuthenticatedAccount",
+            verifyRtBlock: "AuthenticationRtPlaque",
             unauthorizedLanguage: "UnauthorizedLanguage: ",
             contributtonCount: "doubleTexting",
             rtContributtonCount: "rtDoubleTexting",
@@ -1117,6 +1189,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }
 
         card_init();
+        // 自動で設定画面を開く
+        if (SETTING_LIST.debug_viewSettingMenu.data) {
+            menuOpen();
+        }
     }
 
     function menu_init() {
@@ -1243,7 +1319,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     function card_init() {
-        log("初期化中...")
+        log("初期化中...");
 
         let tmp = document.querySelector(OBS_QUERY);
         if (tmp && tmp.classList.contains(PARENT_CLASS)) {
@@ -1626,6 +1702,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 // 名前が絵文字のみ
                 hideComment(messageData, `<span title="name">${lang_dict.emojiOnly}</span>`)
                 return;
+            case 8:
+                // 認証済アカウントをRTするな
+                hideComment(messageData, lang_dict.verifyRtBlock);
+                return;
         }
     }
 
@@ -1635,6 +1715,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             // 自分自身の場合
             if (SETTING_LIST.oneselfRetweetBlock.data && mesData.reTweet.id == mesData.id) {
                 return [5];
+            }
+            // 認証済アカウントをRTするな
+            if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
+                return [8];
             }
         }
         let message = mesData.cleanStr;
@@ -1651,6 +1735,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             // 自分自身の場合
             if (SETTING_LIST.oneselfRetweetBlock.data && mesData.reTweet.id == mesData.id) {
                 return [5];
+            }
+            // 認証済アカウントをRTするな
+            if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
+                return [8];
             }
         }
 
@@ -1743,12 +1831,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     function hideComment(mesData, reason, ch = true) {
         // TLTW以外では大人しく
         if (stopFlag) {
-            addDB(messageData);
+            addDB(mesData);
             return;
         }
         // 認証済アカウントのみ判定
-        if (SETTING_LIST.verifyOnryFilter.data && !messageData.verify) {
-            addDB(messageData);
+        if (SETTING_LIST.verifyOnryFilter.data && !mesData.verify) {
+            addDB(mesData);
             return;
         }
         blacklist_id.add(mesData.id);
@@ -1768,8 +1856,13 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
             let bstw = lang_dict.viewOriginalTweet;
 
+            let isVerify = "";
+            if (SETTING_LIST.visibleVerifyLog.data && mesData.verify) {
+                isVerify = VERIFY_SVG;
+            }
+
             div.innerHTML = /* html */ `
-<span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a> </span>
+<span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a> ${isVerify}</span>
 
 <label><input type="checkbox">${bstw}</label>
 `;
