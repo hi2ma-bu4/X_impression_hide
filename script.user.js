@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.4
+// @version             1.9.5
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -56,7 +56,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・クイックミュートボタンを作成
 ・whitelist_filterの実装
     ・名前
-・blacklist_idを保存するかの設定
 ・他人の引用ツイートでの言語フィルターを作成
 ・他人の引用ツイートテキストフィルターを作成
 ・プロフィールメッセージフィルターを作成
@@ -87,6 +86,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const FORMALITY_CARE_FILTER = true;
     const VISIBLE_BLOCK_BUTTON = true;
     const VISIBLE_REPORT_BUTTON = true;
+    const BLACK_MEMORY = false;
     const AUTO_BLOCK = false;           // trueにしてはいけない(戒め)
     const AUTO_OPEN_SETTING_MENU = false;
 
@@ -156,6 +156,11 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 同城
 可约
 `;
+    const EXCLUDED_USERS = `!# 同上
+
+!# 例として製作者のidを指定
+@tromtub
+`
 
     //プロフィールメッセージフィルター機能を作る
     //Bimbo
@@ -173,6 +178,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const PRO_NAME = "X_impression_hide";
     const BODY_OBS_TIMEOUT = 3000;
     const SETTING_SAVE_KEY = PRO_NAME + "_json";
+    const BLACK_MEMORY_KEY = PRO_NAME + "_blackMemory";
 
     const PARENT_CLASS = PRO_NAME + "_parent";
     const CHECK_CLASS = PRO_NAME + "_check";
@@ -443,6 +449,23 @@ The specification method is the same as [Prohibited expressions].`,
             },
             data: BLACK_NAME_REG,
             _data: BLACK_NAME_REG,
+            input: "textarea",
+        },
+        excludedUsers: {
+            name: {
+                ja: "除外ユーザー",
+                en: "Excluded users",
+            },
+            explanation: {
+                ja: `指定されたユーザーidは検知の対象になりません。
+指定方法はユーザーidを改行で区切って記述するだけです。
+idは完全一致のみ有効です。`,
+                en: `The specified user ID will not be detected.
+To specify, simply write the user IDs separated by line breaks.
+Only exact matches are valid for id.`,
+            },
+            data: EXCLUDED_USERS,
+            _data: EXCLUDED_USERS,
             input: "textarea",
         },
         allowLang: {
@@ -767,6 +790,28 @@ A larger value reduces the processing load but may potentially delay the initial
             min: 100,
             advanced: true,
         },
+        blackMemory: {
+            name: {
+                ja: "検知対象の記憶",
+                en: "Memory of detection target",
+            },
+            explanation: {
+                ja: `検出された対象を記憶します。
+ページを更新などしても過去に検知した対象を素早く非表示に出来ます。
+<span style="color: #f00">※この機能はbeta版です！！
+誤検知されたアカウントが非表示のままになります。
+[除外ユーザー]と併用して使用して下さい。</span>`,
+                en: `Remembers detected objects.
+Even if you refresh the page, you can quickly hide objects detected in the past.
+<span style="color: #f00">*This feature is in beta version! !
+Falsely detected accounts remain hidden.
+Please use it in conjunction with [Excluded User]. </span>`,
+            },
+            data: BLACK_MEMORY,
+            _data: BLACK_MEMORY,
+            input: "checkbox",
+            advanced: true,
+        },
         autoBlock: {
             name: {
                 ja: "【非推奨】自動ブロック",
@@ -941,6 +986,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     //const blackRtList_reg = [];
     const blackNameList_reg = [];
     let allowLang_reg = /.*/;
+    const excludedUsersSet = new Set();
     const msgDB = [];
     const msgDB_id = new Set();
     const blacklist_id = new Set();
@@ -1056,9 +1102,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
         {
             // 設定呼び出し
+            log("設定読み込み...開始");
             let saveData = GM_getValue(SETTING_SAVE_KEY, null);
             if (saveData != null) {
-                log("設定読み込み...開始");
                 let jsonData = null;
                 try {
                     jsonData = JSON.parse(saveData);
@@ -1076,6 +1122,27 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             }
             lang_dict = LANGUAGE_DICT[SETTING_LIST?.language?.data ?? "ja"];
             log("設定読み込み...完了");
+        }
+
+        //検知id再取得
+        if (SETTING_LIST.blackMemory.data) {
+            log("検知済id読み込み...開始");
+            let bd = GM_getValue(BLACK_MEMORY_KEY, null);
+            if (bd != null) {
+                let jsonData = null;
+                try {
+                    jsonData = JSON.parse(bd);
+                }
+                catch (e) {
+                    console.error(e);
+                }
+                if (jsonData != null) {
+                    for (let i = 0, li = jsonData.length; i < li; i++) {
+                        blacklist_id.add(jsonData[i]);
+                    }
+                }
+            }
+            log("検知済id読み込み...完了");
         }
 
         // フィルター正規表現設定
@@ -1147,6 +1214,22 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                         console.error(`[${PRO_NAME}]`, e);
                         SETTING_LIST.blackNameReg.isError = true;
                     }
+                }
+            });
+
+            // 除外idリスト
+            spText = SETTING_LIST.excludedUsers.data
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+
+            spText.forEach(row => {
+                if (row.trim().length && !row.startsWith("!#")) {
+                    if (!row.startsWith("@")) {
+                        row = "@" + row;
+                    }
+                    excludedUsersSet.add(row);
+                    blacklist_id.delete(row);
                 }
             });
 
@@ -1582,6 +1665,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             addDB(messageData);
             return;
         }
+        // 除外ユーザー保護
+        if (excludedUsersSet.has(messageData.id)) {
+            addDB(messageData);
+            return;
+        }
         // blacklist_id比較
         if (blacklist_id.has(messageData.id)) {
             hideComment(messageData, lang_dict.detectedElsewhere);
@@ -1895,6 +1983,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 理由: ${reason}`);
                 menuClicker(BLOCK_QUERY_LIST, mesData);
             }
+
+            // 検知済id保存
+            blacklistSave();
         }
     }
 
@@ -2056,6 +2147,19 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             log("リセット処理実行");
             GM_deleteValue(SETTING_SAVE_KEY);
             location.reload();
+        }
+    }
+
+    function blacklistSave() {
+        if (SETTING_LIST.blackMemory.data) {
+            log("検知済id保存...開始");
+            try {
+                GM_setValue(BLACK_MEMORY_KEY, JSON.stringify(Array.from(blacklist_id)));
+            }
+            catch (e) {
+                console.error(e);
+            }
+            log("検知済id保存...完了");
         }
     }
 
