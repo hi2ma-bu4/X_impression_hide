@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.5
+// @version             1.9.6
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -842,6 +842,25 @@ Even false positives are blocked without hesitation.</span>`,
                 en: `Reset the settings.
 (The page will be reloaded.)
 <span style="color: #f00">Once executed, the settings cannot be restored!!!</span>`,
+            },
+            value: "Reset",
+            input: "button",
+            advanced: true,
+        },
+        resetBlackMemory: {
+            name: {
+                ja: "検知済idのリセット",
+                en: "Reset detected ID",
+            },
+            explanation: {
+                ja: `検知済idをリセットします。
+(ページがリロードされます)
+<span style="color: #f00">実行するとこれまで検知・非表示にされたユーザーが再度表示される可能性が高くなります！
+[検知対象の記憶]を使用している状況で以前より処理が重いと感じた場合、リセットすると処理が軽くなる可能性があります。</span>`,
+                en: `Reset detected ID.
+(The page will be reloaded.)
+<span style="color: #f00">If you run it, there is a high possibility that users who have been detected/hidden will be displayed again!
+If you feel that the processing is slower than before when using [Remember detection targets], resetting it may make the processing faster. </span>`,
             },
             value: "Reset",
             input: "button",
@@ -2056,6 +2075,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
             document.getElementById(EX_MENU_ITEM_BASE_ID + "customCss")?.addEventListener("keydown", OnTabKey);
             document.getElementById(EX_MENU_ITEM_BASE_ID + "resetSetting")?.addEventListener("click", menuReset);
+            document.getElementById(EX_MENU_ITEM_BASE_ID + "resetBlackMemory")?.addEventListener("click", blacklistReset);
             document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_viewBlacklist")?.addEventListener("click", function () {
                 console.log(blacklist_id);
             });
@@ -2160,6 +2180,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 console.error(e);
             }
             log("検知済id保存...完了");
+        }
+    }
+
+    function blacklistReset() {
+        let cf = lang_dict.sureReset;
+        if (confirm(cf)) {
+            log("リセット処理実行");
+            GM_deleteValue(BLACK_MEMORY_KEY);
+            location.reload();
         }
     }
 
