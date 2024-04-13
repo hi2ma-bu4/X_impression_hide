@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.7
+// @version             1.9.8
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -1101,6 +1101,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         case /opera|opr/.test(ua):
             bs = "Opera";
             break;
+        default:
+            console.warn("ブラウザ検知失敗:",ua)
     }
     */
 
@@ -1173,77 +1175,16 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         // フィルター正規表現設定
         {
             // ブラック表現リスト
-            let spText = SETTING_LIST.blackTextReg.data
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n")
-                .split("\n");
-            spText.forEach(row => {
-                if (row.trim().length && !row.startsWith("!#")) {
-                    try {
-                        blacklist_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
-                    }
-                    catch (e) {
-                        console.error(`[${PRO_NAME}]`, e);
-                        SETTING_LIST.blackTextReg.isError = true;
-                    }
-                }
-            });
-
+            regRestoration("blackTextReg", blacklist_reg);
             // ホワイト表現リスト
-            spText = SETTING_LIST.whiteTextReg.data
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n")
-                .split("\n");
-            spText.forEach(row => {
-                if (row.trim().length && !row.startsWith("!#")) {
-                    try {
-                        whitelist_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
-                    }
-                    catch (e) {
-                        console.error(`[${PRO_NAME}]`, e);
-                        SETTING_LIST.whiteTextReg.isError = true;
-                    }
-                }
-            });
-
-            /*
+            regRestoration("whiteTextReg", whitelist_reg);
             // ブラックRT表現リスト
-            spText = SETTING_LIST.blackRtTextReg.data
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n")
-                .split("\n");
-            spText.forEach(row => {
-                if (row.trim().length && !row.startsWith("!#")) {
-                    try {
-                        blackRtList_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
-                    }
-                    catch (e) {
-                        console.error(`[${PRO_NAME}]`, e);
-                        SETTING_LIST.blackRtTextReg.isError = true;
-                    }
-                }
-            });
-            */
-
+            //regRestoration("blackRtTextReg",blackRtList_reg);
             // ブラック名前リスト
-            spText = SETTING_LIST.blackNameReg.data
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n")
-                .split("\n");
-            spText.forEach(row => {
-                if (row.trim().length && !row.startsWith("!#")) {
-                    try {
-                        blackNameList_reg.push([new RegExp(reRegExpStr(row), "uim"), row]);
-                    }
-                    catch (e) {
-                        console.error(`[${PRO_NAME}]`, e);
-                        SETTING_LIST.blackNameReg.isError = true;
-                    }
-                }
-            });
+            regRestoration("blackNameReg", blackNameList_reg);
 
             // 除外idリスト
-            spText = SETTING_LIST.excludedUsers.data
+            let spText = SETTING_LIST.excludedUsers.data
                 .replace(/\r\n/g, "\n")
                 .replace(/\r/g, "\n")
                 .split("\n");
@@ -1695,14 +1636,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             addDB(messageData);
             return;
         }
-        // blacklist_id比較
-        if (blacklist_id.has(messageData.id)) {
-            hideComment(messageData, lang_dict.detectedElsewhere);
-            return;
-        }
         // 認証公式アカウント保護
         if (SETTING_LIST.formalityCare.data && messageData.formality) {
             addDB(messageData);
+            return;
+        }
+        // blacklist_id比較
+        if (blacklist_id.has(messageData.id)) {
+            hideComment(messageData, lang_dict.detectedElsewhere);
             return;
         }
         // 認証済アカウント強制ブロック
@@ -2076,22 +2017,26 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             // なければ複製して追加
             menu_elem = exMenuDOM.cloneNode(true);
             document.body.appendChild(menu_elem);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "__save")?.addEventListener("click", menuSave);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "__close")?.addEventListener("click", menuClose);
+            setEvent("__save", menuSave);
+            setEvent("__close", menuClose);
 
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "customCss")?.addEventListener("keydown", OnTabKey);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "resetSetting")?.addEventListener("click", menuReset);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "resetBlackMemory")?.addEventListener("click", blacklistReset);
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_viewBlacklist")?.addEventListener("click", function () {
+            setEvent("customCss", OnTabKey, "keydown");
+            setEvent("resetSetting", menuReset);
+            setEvent("resetBlackMemory", blacklistReset);
+            setEvent("debug_viewBlacklist", function () {
                 console.log(blacklist_id);
             });
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_viewMsgDB")?.addEventListener("click", function () {
+            setEvent("debug_viewMsgDB", function () {
                 console.log(msgDB_id, msgDB)
             });
-            document.getElementById(EX_MENU_ITEM_BASE_ID + "debug_reInit")?.addEventListener("click", card_init);
+            setEvent("debug_reInit", card_init);
         }
         menu_elem.classList.add(EX_MENU_OPEN_CLASS);
         log("メニュー表示...完了");
+    }
+
+    function setEvent(id, callback, type = "click") {
+        document.getElementById(EX_MENU_ITEM_BASE_ID + id)?.addEventListener(type, callback);
     }
 
     // メニューを閉じる
@@ -2198,6 +2143,28 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }
     }
 
+    // 正規表現リスト復元
+    function regRestoration(tag, list) {
+        if (!SETTING_LIST[tag]) {
+            console.warn("不明なtag:" + tag);
+            return;
+        }
+        let spText = SETTING_LIST[tag].data
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .split("\n");
+        spText.forEach(row => {
+            if (row.trim().length && !row.startsWith("!#")) {
+                try {
+                    list.push([new RegExp(reRegExpStr(row), "uim"), row]);
+                }
+                catch (e) {
+                    console.error(`[${PRO_NAME}]`, e);
+                    SETTING_LIST[tag].isError = true;
+                }
+            }
+        });
+    }
 
     //####################################################################################################
 
