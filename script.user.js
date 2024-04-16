@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.8
+// @version             1.9.9
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -171,6 +171,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const MSG_RESEMBLANCE = 0.85;
     const MAX_SAVE_LOG_SIZE = 150;
     const MAX_HASHTAG_COUNT = 6;
+    const MAX_SYMBOLTAG_COUNT = 1;
     const MAX_CONTRIBUTION_COUNT = 2;
     const MAX_RT_COUNT = 1;
     const MAX_SAME_RT_COUNT = 1;
@@ -624,6 +625,22 @@ It will only appear on detected posts.
             input: "number",
             min: 1,
         },
+        maxSymboltagCount: {
+            name: {
+                ja: "シンボルタグの上限数",
+                en: "Maximum number of symboltags",
+            },
+            explanation: {
+                ja: `1つの投稿内でのシンボルタグの使用上限数を指定します。
+※シンボルタグとは「$TWTR」のような#を$に置き換えた株を表す表現`,
+                en: `It specifies the maximum number of symboltags allowed in a single post.
+*Symbol tag is an expression that represents a stock by replacing # with $, such as "$TWTR"`,
+            },
+            data: MAX_SYMBOLTAG_COUNT,
+            _data: MAX_SYMBOLTAG_COUNT,
+            input: "number",
+            min: 1,
+        },
         maxContributtonCount: {
             name: {
                 ja: "ツリー返信上限数",
@@ -954,6 +971,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             emojiOnly: "絵文字のみ",
             textDuplication: "文章の複製",
             highUsage: "#多量使用",
+            symbolUsage: "$多量使用",
             selfCitation: "自身の引用",
             recursiveDetection: "再帰的検出",
         },
@@ -987,6 +1005,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             emojiOnly: "EmojiOnly",
             textDuplication: "TextDuplication",
             highUsage: "#HighUsage",
+            symbolUsage: "$HighUsage",
             selfCitation: "SelfCitation",
             recursiveDetection: "RecursiveDetection",
         },
@@ -1739,7 +1758,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             case 3:
                 // コピペ
                 hideComment(messageData, `<span title="${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
-                return
+                return;
             case 4:
                 // 異常なハッシュタグの使用
                 hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
@@ -1759,6 +1778,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             case 8:
                 // 認証済アカウントをRTするな
                 hideComment(messageData, lang_dict.verifyRtBlock);
+                return;
+            case 9:
+                // 異常なシンボルタグの使用
+                hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
                 return;
         }
     }
@@ -1815,6 +1838,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         let hashtagCou = message.match(/#[^ ]+/g)?.length ?? 0;
         if (hashtagCou >= SETTING_LIST.maxHashtagCount.data) {
             return [4, hashtagCou];
+        }
+
+        // 異常なシンボルタグの使用回数
+        let symboltagCou = message.match(/\$[^ ]+/g)?.length ?? 0;
+        if (symboltagCou >= SETTING_LIST.maxSymboltagCount.data) {
+            return [9, symboltagCou];
         }
 
         // 短い文字列は比較しない(誤爆対処)
