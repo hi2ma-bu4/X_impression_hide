@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.9.9
+// @version             1.10.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -56,7 +56,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・クイックミュートボタンを作成
 ・whitelist_filterの実装
     ・名前
-・他人の引用ツイートでの言語フィルターを作成
 ・他人の引用ツイートテキストフィルターを作成
 ・プロフィールメッセージフィルターを作成
 ・menuのresize:both;を左下に
@@ -107,11 +106,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ですね!.*(です|ね)。$
 されましたね!.*(です|ね)[!。]$
 
+!# 陰謀的単語
+人口地震
+
 !# タイ語のハッシュタグを含む場合
 #[\\u0E00-\\u0F7F]+
 
-!# アラビア語のみで構成
-^[\\u0600-\\u07FF ]+$
+!# アラビア語の単語を含む場合
+[\\u0600-\\u07FF]{4,}
 
 !# 中国語のなんかよく見るやつ
 ^想上课的私信主人
@@ -133,6 +135,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# 例としてMisskey構文に対応してみる
 ^:[a-z0-9\-_]:$
+
+!# 緊急性の高い単語を除外
+!# ゾンビも使ってくるので除外ユーザー(Excluded users)を併用推奨
+!# (災害・防災アカウントidをフィルターに追記した為コメントアウト)
+!# 
+!# 地震|余震|マグニチュード|火災|災害|津波|波浪|台風|震度
+!# jQuake
+
 `;
     /*
         const BLACK_RT_TEXT_REG = `!# 同上
@@ -160,6 +170,69 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# 例として製作者のidを指定
 @tromtub
+
+!# 災害(緊急)情報発信者を除外
+!# 表記抜けや、誤字はGithubのIssuesにご報告下さい。
+@UN_NERV
+@EN_NERV
+@EqAlarm
+@saigai_sokuho
+@MLIT_JAPAN
+@CAO_BOUSAI
+@JMA_bousai
+@JMA_kishou
+@JCG_koho
+@meti_NIPPON
+@ModJapan_saigai
+@Kanboukansen
+@NPA_saigaiKOHO
+@MPD_bousai
+@JapanSafeTravel
+@JSCE_Saigai
+@nhk_seikatsu
+@TBC_saigai
+@ats_saigai
+@tokyo_bousai
+@yokohama_saigai
+@yamaguchiSaigai
+@y_minami_saigai
+@w_city_saigai
+@sakai_saigai
+@Saigai_ishikawa
+@saigai01
+@HiroshimaBousai
+@etajima_bousai
+@chibaken_saigai
+@aichi_bousai
+@kawasaki_bousai
+@EhimeBousai
+@Gunma_bousai
+@nodasi_saigai
+@IshiSaigai
+@kfb_saigai
+@KagoshimaSaigai
+@kouchi_bousai
+@NTTWestOfficial
+@rikudennw
+@denjiren
+@denjiren_saigai
+@mlit_chokoku
+@JREast_official
+
+!# サイバーセキュリティ
+@cas_nisc
+@nisc_forecast
+
+!# TV
+@news24ntv
+
+!# 交通情報
+@shutoko_traffic
+@nexco_kanto
+@e_nexco_touhoku
+@JAL_flight_info
+@JRE_Super_Exp
+@odakyuline_info
 `
 
     //プロフィールメッセージフィルター機能を作る
@@ -198,7 +271,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const ID_QUERY = "div > span:not(:has(span))";
     const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
     const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
-    const IMAGE_QUERY = "a img";
+    const IMAGE_QUERY = `a img, [data-testid="videoComponent"] video`;
     const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
     const MENU_DISP_QUERY = "[role=group] [role=menu]";
     const BLOCK_QUERY_LIST = [
@@ -1506,6 +1579,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             menuDOM: null,
             _nsOneLoadFlag: false,
         };
+        let pro = [];
 
         // 処理対象か判定
         let article = card_elem?.firstChild?.firstChild?.firstChild;
@@ -1586,20 +1660,32 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             return;
         }
 
-        // 画像を添付しているか
-        let attach_img = article.querySelectorAll(IMAGE_QUERY);
-        if (attach_img) {
-            for (let img of attach_img) {
-                if (/^https?:\/\/pbs.twimg.com\/media\//.test(img.href)) {
-                    messageData.attach_img = true;
-                    break;
+        // メディアを添付しているか
+        pro.push(new Promise(resolve => {
+            setTimeout(() => {
+                let attach_img = article.querySelectorAll(IMAGE_QUERY);
+                if (attach_img) {
+                    for (let img of attach_img) {
+                        if (/^https?:\/\/pbs\.twimg\.com\/media\//.test(img.href)) {
+                            // 画像    
+                            messageData.attach_img = true;
+                            break;
+                        }
+                        else if (/^https?:\/\/video\.twimg\.com\/tweet_video\//.test(img.src)) {
+                            // 動画
+                            messageData.attach_img = true;
+                            break;
+                        }
+                    }
                 }
-            }
-        }
+                resolve();
+            }, 1000);
+        }));
+
 
         // メッセージ取得
-        let text_divs = article.querySelectorAll("div[lang]");
-        let text_div = text_divs?.[0];
+        messageData._text_divs = article.querySelectorAll("div[lang]");
+        let text_div = messageData._text_divs?.[0];
 
         let fullStr = "";
         let str = "";
@@ -1634,159 +1720,160 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         messageData.str_len = messageData.cleanStr.length;
 
         // メニュー取得(...のこと)
-        let menuDOMs = article.querySelectorAll(MENU_BUTTON_QUERY)
-        if (menuDOMs.length >= 3) {
-            messageData.menuDOM = menuDOMs[0];
-        }
-        else {
-            setTimeout(function () {
-                messageData.menuDOM = article.querySelector(MENU_BUTTON_QUERY);
+        pro.push(new Promise(resolve => {
+            setTimeout(() => {
+                let menuDOMs = article.querySelectorAll(MENU_BUTTON_QUERY);
+                if (menuDOMs.length >= 3) {
+                    messageData.menuDOM = menuDOMs[0];
+                }
+                resolve();
             }, 1000);
-        }
+        }));
 
-        //log(messageData);
+        Promise.all(pro).then(() => {
+            let ret = commentFilter(messageData);
+            switch (ret[0]) {
+                case -1:
+                    // 取得,判定済投稿
+                    return;
+                case 0:
+                    let id = messageData.id;
+                    if (msgDB_id.has(id)) {
+                        let bu = messageData.base_url;
+                        // 連投検出
+                        if (SETTING_LIST.maxContributtonCount.data > 0) {
+                            let cou = 0;
+                            for (let md of msgDB) {
+                                if (md.id == id && md.base_url == bu) {
+                                    cou++;
+                                }
+                            }
+                            if (SETTING_LIST.maxContributtonCount.data <= cou) {
+                                hideComment(messageData, `${lang_dict.contributtonCount}`);
+                                return;
+                            }
+                        }
+                        // RT連投検出
+                        if (SETTING_LIST.maxRtCount.data > 0 && messageData.reTweet) {
+                            let cou = 0;
+                            let rtl = new Set(messageData.reTweet.id);
+                            for (let md of msgDB) {
+                                if (md.id == id && md.base_url == bu && md.reTweet) {
+                                    cou++;
+                                    rtl.add(md.reTweet.id)
+                                }
+                            }
+                            if (SETTING_LIST.maxRtCount.data <= cou) {
+                                hideComment(messageData, `${lang_dict.rtContributtonCount}`);
+                                // 引用先も一応抹消
+                                for (let rt of rtl) {
+                                    blacklist_id.add(rt);
+                                }
+                                return;
+                            }
+                        }
+                        // 同一ユーザーRT検出
+                        if (SETTING_LIST.maxSameRtCount.data > 0 && messageData.reTweet) {
+                            let rt = messageData.reTweet.id;
+                            let cou = 0;
+                            let us = new Set(id);
+                            let usd = [messageData];
+                            for (let md of msgDB) {
+                                if (md.base_url == bu && md.reTweet?.id == rt) {
+                                    cou++;
+                                    if (!(us.has(md.id))) {
+                                        us.add(md.id);
+                                        usd.push(md);
+                                    }
+                                }
+                            }
+                            if (SETTING_LIST.maxRtCount.data <= cou) {
+                                for (let td of usd) {
+                                    hideComment(td, `${lang_dict.rtSharingSeries}`);
+                                }
+                                // 引用先も一応抹消
+                                blacklist_id.add(rt);
+                                return;
+                            }
+                        }
+                    }
+                    // 問題なし
+                    addDB(messageData);
+                    return;
+                case 1:
+                    // コメントフィルターに反応
+                    hideComment(messageData, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+                    return;
+                case 2:
+                    // 絵文字のみ(スパム)
+                    hideComment(messageData, `<span title="comment">${lang_dict.emojiOnly}</span>`);
+                    return;
+                case 3:
+                    // コピペ
+                    hideComment(messageData, `<span title="${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
+                    return;
+                case 4:
+                    // 異常なハッシュタグの使用
+                    hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
+                    return;
+                case 5:
+                    // 自分自身の引用
+                    hideComment(messageData, lang_dict.selfCitation);
+                    return;
+                case 6:
+                    // 名前フィルターに反応
+                    hideComment(messageData, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+                    return;
+                case 7:
+                    // 名前が絵文字のみ
+                    hideComment(messageData, `<span title="name">${lang_dict.emojiOnly}</span>`)
+                    return;
+                case 8:
+                    // 認証済アカウントをRTするな
+                    hideComment(messageData, lang_dict.verifyRtBlock);
+                    return;
+                case 9:
+                    // 異常なシンボルタグの使用
+                    hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
+                    return;
+            }
+        }).catch(console.warn);
+    }
+
+    function commentFilter(mesData) {//log(messageData);
         // 投稿主保護
-        if (messageData.id == parent_id) {
-            addDB(messageData);
-            return;
+        if (mesData.id == parent_id) {
+            addDB(mesData);
+            return [-1];
         }
         // 除外ユーザー保護
-        if (excludedUsersSet.has(messageData.id)) {
-            addDB(messageData);
-            return;
+        if (excludedUsersSet.has(mesData.id)) {
+            addDB(mesData);
+            return [-1];
         }
         // 認証公式アカウント保護
-        if (SETTING_LIST.formalityCare.data && messageData.formality) {
-            addDB(messageData);
-            return;
+        if (SETTING_LIST.formalityCare.data && mesData.formality) {
+            addDB(mesData);
+            return [-1];
         }
         // blacklist_id比較
-        if (blacklist_id.has(messageData.id)) {
-            hideComment(messageData, lang_dict.detectedElsewhere);
-            return;
+        if (blacklist_id.has(mesData.id)) {
+            hideComment(mesData, lang_dict.detectedElsewhere);
+            return [-1];
         }
         // 認証済アカウント強制ブロック
-        if (SETTING_LIST.verifyBlock.data && messageData.verify) {
-            hideComment(messageData, lang_dict.authenticatedAccount);
-            return;
+        if (SETTING_LIST.verifyBlock.data && mesData.verify) {
+            hideComment(mesData, lang_dict.authenticatedAccount);
+            return [-1];
         }
         // 投稿言語の制限
-        for (let div of text_divs) {
+        for (let div of mesData._text_divs) {
             if (!allowLang_reg.test(div.lang)) {
-                hideComment(messageData, `<span title="${div.lang}">${lang_dict.unauthorizedLanguage}</span>`);
-                return;
+                hideComment(mesData, `<span title="${div.lang}">${lang_dict.unauthorizedLanguage}</span>`);
+                return [-1];
             }
         }
 
-        let ret = commentFilter(messageData);
-        switch (ret[0]) {
-            case -1:
-                // 取得,判定済投稿
-                return;
-            case 0:
-                let id = messageData.id;
-                if (msgDB_id.has(id)) {
-                    let bu = messageData.base_url;
-                    // 連投検出
-                    if (SETTING_LIST.maxContributtonCount.data > 0) {
-                        let cou = 0;
-                        for (let md of msgDB) {
-                            if (md.id == id && md.base_url == bu) {
-                                cou++;
-                            }
-                        }
-                        if (SETTING_LIST.maxContributtonCount.data <= cou) {
-                            hideComment(messageData, `${lang_dict.contributtonCount}`);
-                            return;
-                        }
-                    }
-                    // RT連投検出
-                    if (SETTING_LIST.maxRtCount.data > 0 && messageData.reTweet) {
-                        let cou = 0;
-                        let rtl = new Set(messageData.reTweet.id);
-                        for (let md of msgDB) {
-                            if (md.id == id && md.base_url == bu && md.reTweet) {
-                                cou++;
-                                rtl.add(md.reTweet.id)
-                            }
-                        }
-                        if (SETTING_LIST.maxRtCount.data <= cou) {
-                            hideComment(messageData, `${lang_dict.rtContributtonCount}`);
-                            // 引用先も一応抹消
-                            for (let rt of rtl) {
-                                blacklist_id.add(rt);
-                            }
-                            return;
-                        }
-                    }
-                    // 同一ユーザーRT検出
-                    if (SETTING_LIST.maxSameRtCount.data > 0 && messageData.reTweet) {
-                        let rt = messageData.reTweet.id;
-                        let cou = 0;
-                        let us = new Set(id);
-                        let usd = [messageData];
-                        for (let md of msgDB) {
-                            if (md.base_url == bu && md.reTweet?.id == rt) {
-                                cou++;
-                                if (!(us.has(md.id))) {
-                                    us.add(md.id);
-                                    usd.push(md);
-                                }
-                            }
-                        }
-                        if (SETTING_LIST.maxRtCount.data <= cou) {
-                            for (let td of usd) {
-                                hideComment(td, `${lang_dict.rtSharingSeries}`);
-                            }
-                            // 引用先も一応抹消
-                            blacklist_id.add(rt);
-                            return;
-                        }
-                    }
-                }
-                // 問題なし
-                addDB(messageData);
-                return;
-            case 1:
-                // コメントフィルターに反応
-                hideComment(messageData, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
-                return;
-            case 2:
-                // 絵文字のみ(スパム)
-                hideComment(messageData, `<span title="comment">${lang_dict.emojiOnly}</span>`);
-                return;
-            case 3:
-                // コピペ
-                hideComment(messageData, `<span title="${lang_dict.similarity}:${(ret[1] * 10000 | 0) / 100}%">${lang_dict.textDuplication}</span>`);
-                return;
-            case 4:
-                // 異常なハッシュタグの使用
-                hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
-                return;
-            case 5:
-                // 自分自身の引用
-                hideComment(messageData, lang_dict.selfCitation);
-                return;
-            case 6:
-                // 名前フィルターに反応
-                hideComment(messageData, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
-                return;
-            case 7:
-                // 名前が絵文字のみ
-                hideComment(messageData, `<span title="name">${lang_dict.emojiOnly}</span>`)
-                return;
-            case 8:
-                // 認証済アカウントをRTするな
-                hideComment(messageData, lang_dict.verifyRtBlock);
-                return;
-            case 9:
-                // 異常なシンボルタグの使用
-                hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
-                return;
-        }
-    }
-
-    function commentFilter(mesData) {
         // 無言で無言の引用リツイートしている場合
         if (mesData.reTweet && mesData._notTextDiv) {
             // 自分自身の場合
