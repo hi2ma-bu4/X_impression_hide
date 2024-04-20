@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.10.2
+// @version             1.11.11
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -22,6 +22,7 @@
 // @compatible          edge
 // @compatible          opera chromium製なので動くと仮定
 // @compatible          firefox
+// @compatible          kiwi
 // @grant               GM.addStyle
 // @grant               GM_setValue
 // @grant               GM_getValue
@@ -63,13 +64,16 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・gifをブロック
 ・正規表現などの最適化
 ・軽量化
-・kiwi browserで動くようにする
 */
 
 
 (function () {
     'use strict';
+    // スマホ判定
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+
+    // ここから設定
     const DEBUG = false;
 
     // 初期値(定数)
@@ -259,6 +263,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const HIDE_CLASS = PRO_NAME + "_none";
     const LOG_CLASS = PRO_NAME + "_log";
     const VERIFY_CLASS = PRO_NAME + "_verify";
+    const PC_FLAG_CLASS = PRO_NAME + "_pc";
+    const MOBILE_FLAG_CLASS = PRO_NAME + "_mobile";
     const EX_MENU_ID = PRO_NAME + "_menu";
     const EX_MENU_OPEN_CLASS = EX_MENU_ID + "_open";
     const EX_MENU_ITEM_BASE_ID = EX_MENU_ID + "_item_";
@@ -273,7 +279,13 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
     const IMAGE_QUERY = `a img, [data-testid="videoComponent"] video`;
     const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
-    const MENU_DISP_QUERY = "[role=group] [role=menu]";
+    let MENU_DISP_QUERY;
+    if (isMobile) {
+        MENU_DISP_QUERY = "#layers [role=menu] [role=group]";
+    }
+    else {
+        MENU_DISP_QUERY = "[role=group] [role=menu]";
+    }
     const BLOCK_QUERY_LIST = [
         `${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`,
         "[role=alertdialog] [role=group] [role=button] div",
@@ -298,6 +310,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 #${EX_MENU_ID} {
     display: none;
     position: fixed;
+    color: #111;
     top: 0;
     right: 0;
     z-index: 2000;
@@ -381,6 +394,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 }
 
 /* メニュー表示設定 */
+#${EX_MENU_ID}.${MOBILE_FLAG_CLASS} {
+    font-size: 0.8em;
+}
 #${EX_MENU_ID} textarea {
     width: 95%;
     resize: vertical;
@@ -1157,47 +1173,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     const CrLfReg = /[\r\n]/gu;
     const spaceReg = / /g;
 
-    /* 必要なくなったのでコメントアウト
-    // 使用ブラウザ種類
-    const ua = navigator.userAgent.toLowerCase();
-    let bs = "";
-    let ieVersion = 0;
-    switch (true) {
-        case /fbios|fb_iab/.test(ua): // Facebook
-            bs = "Facebook";
-            break;
-        case /instagram/.test(ua): // Instagram
-            bs = "Instagram";
-            break;
-        case / line\//.test(ua): // LINE
-            bs = "LINE";
-            break;
-        case /msie/.test(ua): // IE ~11
-            ieVersion = parseInt(/msie (\d+)/.exec(ua)[1]);
-        case /trident/.test(ua): // IE 11~
-            bs = "Internet Explorer";
-            break;
-        case /edge/.test(ua):
-        case /edg/.test(ua):
-            bs = "Edge";
-            break;
-        case /chrome|crios/.test(ua): // Chrome for iOS
-            bs = "Chrome";
-            break;
-        case /safari/.test(ua):
-            bs = "Safari";
-            break;
-        case /firefox/.test(ua):
-            bs = "Firefox";
-            break;
-        case /opera|opr/.test(ua):
-            bs = "Opera";
-            break;
-        default:
-            console.warn("ブラウザ検知失敗:",ua)
-    }
-    */
-
     log("起動中...");
 
     init();
@@ -1456,6 +1431,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         exMenuDOM = document.createElement("div");
         exMenuDOM.id = EX_MENU_ID;
         exMenuDOM.lang = SETTING_LIST.language.data;
+        if (isMobile) {
+            exMenuDOM.classList.add(MOBILE_FLAG_CLASS);
+        }
+        else {
+            exMenuDOM.classList.add(PC_FLAG_CLASS);
+        }
         exMenuDOM.appendChild(w_exMenuDOM);
     }
 
@@ -2064,7 +2045,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             if (SETTING_LIST.autoBlock.data) {
                 console.log(`自動ブロック: ${mesData.name}(${mesData.id})
 理由: ${reason}`);
-                menuClicker(BLOCK_QUERY_LIST, mesData);
+
+                menuClicker(BLOCK_QUERY_LIST_PC, mesData);
             }
 
             // 検知済id保存
