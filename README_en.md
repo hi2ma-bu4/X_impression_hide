@@ -6,7 +6,9 @@
 
 ### Prerequisite
 > [!WARNING]
-> This is for PC use only.
+> <s>This is for PC use only.</s>
+> <br>
+> Kiwi browser compatible from v11.11.1!
 > <br>
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) is required.

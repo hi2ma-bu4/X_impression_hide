@@ -6,7 +6,9 @@
 
 ### 前提条件
 > [!WARNING]
-> PC専用です
+> <s>PC専用です</s>
+> <br>
+> v11.11.1からkiwiブラウザ対応！
 > <br>
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)が必要です。
