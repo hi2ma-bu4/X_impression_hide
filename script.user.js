@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.11.12
+// @version             1.11.13
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -262,6 +262,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const CHECK_CLASS = PRO_NAME + "_check";
     const HIDE_CLASS = PRO_NAME + "_none";
     const LOG_CLASS = PRO_NAME + "_log";
+    const MORE_TWEET_CLASS = PRO_NAME + "_moreTweet";
     const VERIFY_CLASS = PRO_NAME + "_verify";
     const PC_FLAG_CLASS = PRO_NAME + "_pc";
     const MOBILE_FLAG_CLASS = PRO_NAME + "_mobile";
@@ -1125,6 +1126,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     // ページ変更確認に使用
     let body_isReservation = false;
     let body_isWait = false;
+    // もっと見るを軽量で観測する為に使用
+    let existMoreTweet = false;
 
     const kanaMap = {
         ｶﾞ: "ガ", ｷﾞ: "ギ", ｸﾞ: "グ", ｹﾞ: "ゲ", ｺﾞ: "ゴ",
@@ -1448,6 +1451,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             console.log("MutationObserverはすでに設定されています！");
             return;
         }
+        // もっと見るフラグ初期化
+        existMoreTweet = false;
 
         // 表示待機
         waitForKeyElements(OBS_QUERY, function () {
@@ -1542,13 +1547,34 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }, SETTING_LIST.bodyObsTimeout.data);
     }
 
-    // 処理対象判定&処理実行
+    // 処理対象判定&処理実行(疑似的に非同期処理に)
     function cardCheck(card_elem) {
         // 処理は1度のみ
         if (card_elem.classList.contains(CHECK_CLASS)) {
             return;
         }
         card_elem.classList.add(CHECK_CLASS)
+
+        // もっと見るが判定されてしまう問題をゴリ押しで対処
+        if (existMoreTweet) {
+            let tmp_elem = card_elem;
+            for (let i = 0; i < 5; i++) {
+                tmp_elem = tmp_elem.previousElementSibling;
+                if (!tmp_elem) {
+                    break;
+                }
+                if (tmp_elem.classList.contains(MORE_TWEET_CLASS)) {
+                    card_elem.classList.add(MORE_TWEET_CLASS);
+                    return;
+                }
+            }
+        }
+        else {
+            if (card_elem.querySelector("h2")) {
+                existMoreTweet = true;
+                card_elem.classList.add(MORE_TWEET_CLASS);
+            }
+        }
 
         let messageData = {
             base_url: oldUrl,
