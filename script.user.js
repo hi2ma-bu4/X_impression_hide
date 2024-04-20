@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.11.11
+// @version             1.11.12
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -1715,6 +1715,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         Promise.all(pro).then(() => {
             let ret = commentFilter(messageData);
             switch (ret[0]) {
+                case -2:
+                    // 処理済
+                    return;
                 case -1:
                     // 取得,判定済投稿
                     return;
@@ -1818,6 +1821,17 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                     // 異常なシンボルタグの使用
                     hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
                     return;
+                case 10:
+                    // 他で検出済
+                    hideComment(messageData, lang_dict.detectedElsewhere);
+                    return;
+                case 11:
+                    // 認証済アカウント
+                    hideComment(messageData, lang_dict.authenticatedAccount);
+                    return;
+                case 12:
+                    hideComment(messageData, `<span title="${ret[1]}">${lang_dict.unauthorizedLanguage}</span>`);
+                    return;
             }
         }).catch(console.warn);
     }
@@ -1826,33 +1840,30 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         // 投稿主保護
         if (mesData.id == parent_id) {
             addDB(mesData);
-            return [-1];
+            return [-2];
         }
         // 除外ユーザー保護
         if (excludedUsersSet.has(mesData.id)) {
             addDB(mesData);
-            return [-1];
+            return [-2];
         }
         // 認証公式アカウント保護
         if (SETTING_LIST.formalityCare.data && mesData.formality) {
             addDB(mesData);
-            return [-1];
+            return [-2];
         }
         // blacklist_id比較
         if (blacklist_id.has(mesData.id)) {
-            hideComment(mesData, lang_dict.detectedElsewhere);
-            return [-1];
+            return [10];
         }
         // 認証済アカウント強制ブロック
         if (SETTING_LIST.verifyBlock.data && mesData.verify) {
-            hideComment(mesData, lang_dict.authenticatedAccount);
-            return [-1];
+            return [11];
         }
         // 投稿言語の制限
         for (let div of mesData._text_divs) {
             if (!allowLang_reg.test(div.lang)) {
-                hideComment(mesData, `<span title="${div.lang}">${lang_dict.unauthorizedLanguage}</span>`);
-                return [-1];
+                return [12, div.lang];
             }
         }
 
@@ -2046,7 +2057,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 console.log(`自動ブロック: ${mesData.name}(${mesData.id})
 理由: ${reason}`);
 
-                menuClicker(BLOCK_QUERY_LIST_PC, mesData);
+                menuClicker(BLOCK_QUERY_LIST, mesData);
             }
 
             // 検知済id保存
