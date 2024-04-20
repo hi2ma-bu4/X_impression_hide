@@ -8,7 +8,7 @@
 > [!WARNING]
 > <s>This is for PC use only.</s>
 > <br>
-> Kiwi browser compatible from v11.11.1!
+> Kiwi browser compatible from v1.11.11!
 > <br>
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) is required.
