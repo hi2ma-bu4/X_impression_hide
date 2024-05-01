@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.11.13
+// @version             1.12.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -78,37 +78,29 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
     // 初期値(定数)
     const LANGUAGE = "ja";
-    const VISIBLE_LOG = true;
-    const VISIBLE_VERIFY_LOG = true;
-    const ONESELF_RETWEET_BLOCK = true;
-    const EMOJI_ONRY_BLOCK = true;
-    const EMOJI_ONRY_NAME_BLOCK = true;
-    const VERIFY_BLOCK = false;
-    const VERIFY_RT_BLOCK = false;
-    const VERIFY_ONRY_FILTER = false;
-    const FORMALITY_CARE_FILTER = true;
-    const VISIBLE_BLOCK_BUTTON = true;
-    const VISIBLE_REPORT_BUTTON = true;
-    const BLACK_MEMORY = false;
-    const AUTO_BLOCK = false;           // trueにしてはいけない(戒め)
-    const AUTO_OPEN_SETTING_MENU = false;
 
     const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
 !# プロフィールメッセージを異常に推してる人
 ((初|はじ)めまして|こんにち[はわ]|こんばん[はわ]|やっほ|[き気]になった|良かったら).*?ぷろふ
-ぷろふぃーるの確認を
+ぷろふ.*の(確認|チェック|check)
 (^(連絡|絡み)|[→⇒➡]).*(よろ|おねがいします|返事)
-
-!# chatGPTが時々やらかす濁点半濁点問題を流用
-[\\u3099\\u309a]
 
 !# chatGPTのエラーメッセージを取り敢えず対処
 ^申し訳ありません.*?(過激な表現や性的な内容|不適切なコンテンツや言葉).*?他の(質問や話題|トピックで質問)があれば.*?。$
 
 !# chatGPT構文
-ですね!.*(です|ね)。$
-されましたね!.*(です|ね)[!。]$
+ですね!.+(です|ね)[!。]$
+されましたね!.+(です|ね)[!。]$
+でしょう.+かもしれません.+(です|ね)[!。]$
+
+!# 翻訳ってこと？！
+^ハハハ、.+ます。?
+^ああ、.+です。?
+それは.+ますね。.+ですか\\?
+
+!# 文章名指し
+この情報を共有していただきありがとうございます
 
 !# 陰謀的単語
 人口地震
@@ -159,10 +151,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const BLACK_NAME_REG = `!# 同上
 
 !# アラビア語のみで構成
-^[\\u0600-\\u07FF ]+$
+^([\\u0600-\\u07FF ]|\\p{P}|\\p{S})+$
 
 !# ヒンディー語のみで構成
-^[\\u0900-\\u097F ]+$
+^([\\u0900-\\u097F ]|\\p{P}|\\p{S})+$
+
+!# エロ垢抹消
+ぷろふ.*(確認|ちぇっく|check)
+おふぱこ
 
 !# 中国語のなんかよく見るやつ
 反差
@@ -242,19 +238,17 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     //プロフィールメッセージフィルター機能を作る
     //Bimbo
 
-    const ALLOW_LANG = "ja|en|es|zh|pt|qme|qam|und";
-    const MAX_SAVE_TEXT_SIZE = 80;
-    const MIN_SAVE_TEXT_SIZE = 8;
-    const MSG_RESEMBLANCE = 0.85;
-    const MAX_SAVE_LOG_SIZE = 150;
-    const MAX_HASHTAG_COUNT = 6;
-    const MAX_SYMBOLTAG_COUNT = 1;
-    const MAX_CONTRIBUTION_COUNT = 2;
-    const MAX_RT_COUNT = 1;
-    const MAX_SAME_RT_COUNT = 1;
+    const ALLOW_LANG = "ja|en|es|zh|ko|pt|qme|qam|und";
+
+    const SUB_DEFINITION_SUB = `!# 同上
+
+!# それっぽいのをまとめとく
+((season|シーズン).{0,2}(\\d{1,2}|[IVX]{1,5})|サブ|ファースト|セカンド|サード|新・?|ファイナル|(\\d{1,4}|[一二三四五六七八九十百千万壱弐参肆伍陸漆捌玖拾陌阡萬廿丗卅世]+)代目|sub|first|1st|second|2nd|third|3rd|fourth|4th|new|final)
+
+`
+
 
     const PRO_NAME = "X_impression_hide";
-    const BODY_OBS_TIMEOUT = 3000;
     const SETTING_SAVE_KEY = PRO_NAME + "_json";
     const BLACK_MEMORY_KEY = PRO_NAME + "_blackMemory";
 
@@ -456,8 +450,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
                 en: `It will remove the hidden logs from the screen.
 The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.`,
             },
-            data: VISIBLE_LOG,
-            _data: VISIBLE_LOG,
+            data: true,
             input: "checkbox",
         },
         visibleVerifyLog: {
@@ -471,8 +464,7 @@ The screen will be peaceful, but the reasons for hiding the posts and the origin
                 en: `Adds a certification mark after the name of the hidden log.
 Corporate badges are also displayed as blue badges.`,
             },
-            data: VISIBLE_VERIFY_LOG,
-            _data: VISIBLE_VERIFY_LOG,
+            data: true,
             input: "checkbox",
         },
         blackTextReg: {
@@ -492,7 +484,6 @@ Full-width alphanumeric characters will be converted to half-width,
  and line breaks will be converted to spaces automatically.`,
             },
             data: BLACK_TEXT_REG,
-            _data: BLACK_TEXT_REG,
             input: "textarea",
         },
         whiteTextReg: {
@@ -509,7 +500,6 @@ Matching posts will not be hidden.
 The specification method is the same as [Prohibited expressions].`,
             },
             data: WHITE_TEXT_REG,
-            _data: WHITE_TEXT_REG,
             input: "textarea",
         },
         /*blackRtTextReg: {
@@ -539,7 +529,6 @@ The specification method is the same as [Prohibited expressions].`,
 The specification method is the same as [Prohibited expressions].`,
             },
             data: BLACK_NAME_REG,
-            _data: BLACK_NAME_REG,
             input: "textarea",
         },
         excludedUsers: {
@@ -556,7 +545,6 @@ To specify, simply write the user IDs separated by line breaks.
 Only exact matches are valid for id.`,
             },
             data: EXCLUDED_USERS,
-            _data: EXCLUDED_USERS,
             input: "textarea",
         },
         allowLang: {
@@ -571,7 +559,6 @@ Only exact matches are valid for id.`,
 The description should be written using regular expressions (between the / characters).`,
             },
             data: ALLOW_LANG,
-            _data: ALLOW_LANG,
             input: "text",
         },
         oneselfRetweetBlock: {
@@ -583,9 +570,37 @@ The description should be written using regular expressions (between the / chara
                 ja: `自身を引用ツイートする投稿を非表示にします。`,
                 en: `It hides posts that quote oneself.`,
             },
-            data: ONESELF_RETWEET_BLOCK,
-            _data: ONESELF_RETWEET_BLOCK,
+            data: true,
             input: "checkbox",
+        },
+        oneselfSubRetweetBlock: {
+            name: {
+                ja: "サブ垢での自身の引用禁止",
+                en: "Prohibition of quoting yourself in sub-text",
+            },
+            explanation: {
+                ja: `サブ垢での自身を引用ツイートする投稿を非表示にします。
+ユーザー名から[サブ,2nd]などを除外しての一致検索です。`,
+                en: `It hides posts that quote oneself.`,
+            },
+            data: true,
+            input: "checkbox",
+        },
+        subDefinitionReg: {
+            name: {
+                ja: "サブ垢定義用表現",
+                en: "Expression for sub-scale definition",
+            },
+            explanation: {
+                ja: `[サブ垢での自身の引用禁止]での除外文字を指定します。
+1行ずつ評価していく為同時評価が必要な場合は「(aaa|bbb)」を使用して下さい。
+指定方法などは[禁止する表現]と同じです。`,
+                en: `Specify the excluded characters for [Prohibit quoting yourself in sub-text].
+If you need simultaneous evaluation, use "(aaa|bbb)" as each line is evaluated one by one.
+The specification method is the same as [Prohibited expressions].`,
+            },
+            data: SUB_DEFINITION_SUB,
+            input: "textarea",
         },
         emojiOnryBlock: {
             name: {
@@ -596,8 +611,7 @@ The description should be written using regular expressions (between the / chara
                 ja: `絵文字のみで構成された投稿を非表示にします。`,
                 en: `Hide posts composed only of emojis.`,
             },
-            data: EMOJI_ONRY_BLOCK,
-            _data: EMOJI_ONRY_BLOCK,
+            data: true,
             input: "checkbox",
         },
         emojiOnryNameBlock: {
@@ -609,8 +623,7 @@ The description should be written using regular expressions (between the / chara
                 ja: `絵文字のみで構成されたユーザー名を非表示にします。`,
                 en: `Hide usernames composed only of emojis.`,
             },
-            data: EMOJI_ONRY_NAME_BLOCK,
-            _data: EMOJI_ONRY_NAME_BLOCK,
+            data: true,
             input: "checkbox",
         },
         verifyBlock: {
@@ -622,8 +635,7 @@ The description should be written using regular expressions (between the / chara
                 ja: `認証済アカウントを無差別に非表示にします。`,
                 en: `It indiscriminately hides authenticated accounts.`,
             },
-            data: VERIFY_BLOCK,
-            _data: VERIFY_BLOCK,
+            data: false,
             input: "checkbox",
         },
         verifyRtBlock: {
@@ -635,8 +647,7 @@ The description should be written using regular expressions (between the / chara
                 ja: `認証済アカウント投稿に対する引用RTを非表示にします。`,
                 en: `Hide quoted RTs for authenticated account posts.`,
             },
-            data: VERIFY_RT_BLOCK,
-            _data: VERIFY_RT_BLOCK,
+            data: false,
             input: "checkbox",
         },
         verifyOnryFilter: {
@@ -650,8 +661,7 @@ The description should be written using regular expressions (between the / chara
                 en: `It detects only authenticated accounts.
 Regular accounts and accounts without verification badges will no longer be blocked.`,
             },
-            data: VERIFY_ONRY_FILTER,
-            _data: VERIFY_ONRY_FILTER,
+            data: false,
             input: "checkbox",
         },
         formalityCare: {
@@ -665,8 +675,7 @@ Regular accounts and accounts without verification badges will no longer be bloc
                 en: `Exclude official accounts from detection.
 (Official means anything other than the blue badge)`,
             },
-            data: FORMALITY_CARE_FILTER,
-            _data: FORMALITY_CARE_FILTER,
+            data: true,
             input: "checkbox",
         },
         visibleBlockButton: {
@@ -680,8 +689,7 @@ Regular accounts and accounts without verification badges will no longer be bloc
                 en: `Displays a button that allows you to block with one click.
 It will only appear on detected posts.`,
             },
-            data: VISIBLE_BLOCK_BUTTON,
-            _data: VISIBLE_BLOCK_BUTTON,
+            data: true,
             input: "checkbox",
         },
         visibleReportButton: {
@@ -697,8 +705,7 @@ It will only appear on detected posts.`,
 It will only appear on detected posts.
 (Initial value is spam report)`,
             },
-            data: VISIBLE_REPORT_BUTTON,
-            _data: VISIBLE_REPORT_BUTTON,
+            data: true,
             input: "checkbox",
         },
         maxHashtagCount: {
@@ -710,8 +717,7 @@ It will only appear on detected posts.
                 ja: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
                 en: `It specifies the maximum number of hashtags allowed in a single post.`,
             },
-            data: MAX_HASHTAG_COUNT,
-            _data: MAX_HASHTAG_COUNT,
+            data: 6,
             input: "number",
             min: 1,
         },
@@ -726,8 +732,7 @@ It will only appear on detected posts.
                 en: `It specifies the maximum number of symboltags allowed in a single post.
 *Symbol tag is an expression that represents a stock by replacing # with $, such as "$TWTR"`,
             },
-            data: MAX_SYMBOLTAG_COUNT,
-            _data: MAX_SYMBOLTAG_COUNT,
+            data: 1,
             input: "number",
             min: 1,
         },
@@ -744,8 +749,7 @@ It will only appear on detected posts.
 The value is the line of permission. (Example: 1 hides 2 or more posts)
 Specifying 0 disables this setting.`,
             },
-            data: MAX_CONTRIBUTION_COUNT,
-            _data: MAX_CONTRIBUTION_COUNT,
+            data: 2,
             input: "number",
             min: 0,
         },
@@ -760,8 +764,7 @@ Specifying 0 disables this setting.`,
                 en: `Specify the maximum number of quote RT replies for one user in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: MAX_RT_COUNT,
-            _data: MAX_RT_COUNT,
+            data: 1,
             input: "number",
             min: 0,
         },
@@ -776,8 +779,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
                 en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: MAX_SAME_RT_COUNT,
-            _data: MAX_SAME_RT_COUNT,
+            data: 1,
             input: "number",
             min: 0,
         },
@@ -790,8 +792,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
                 ja: `コピペ文章かを判別する為の基準値を指定します。`,
                 en: `It specifies the threshold value for determining whether a text is a copied and pasted text.`,
             },
-            data: MSG_RESEMBLANCE,
-            _data: MSG_RESEMBLANCE,
+            data: 0.85,
             input: "number",
             min: 0,
             max: 1,
@@ -810,8 +811,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
 Increasing the value reduces the false positive rate but also reduces the detection rate.
 (This value is not used if the post's character count is below the maximum value.)`,
             },
-            data: MAX_SAVE_TEXT_SIZE,
-            _data: MAX_SAVE_TEXT_SIZE,
+            data: 80,
             input: "number",
             min: 0,
         },
@@ -828,8 +828,7 @@ Increasing the value reduces the false positive rate but also reduces the detect
 Increasing the value reduces the false detection rate as well as the detection rate.
 If it is larger than the [Maximum text size for comparison], the comparison process will not be executed.`,
             },
-            data: MIN_SAVE_TEXT_SIZE,
-            _data: MIN_SAVE_TEXT_SIZE,
+            data: 8,
             input: "number",
             min: 0,
         },
@@ -844,8 +843,7 @@ If it is larger than the [Maximum text size for comparison], the comparison proc
                 en: `This specifies the number of comparison texts to be retained.
 A smaller value reduces the processing load but also decreases the detection rate.`,
             },
-            data: MAX_SAVE_LOG_SIZE,
-            _data: MAX_SAVE_LOG_SIZE,
+            data: 150,
             input: "number",
             min: 1,
         },
@@ -859,7 +857,6 @@ A smaller value reduces the processing load but also decreases the detection rat
                 en: `Set the display language.`,
             },
             data: LANGUAGE,
-            _data: LANGUAGE,
             input: "select",
             select: {
                 ja: "日本語(ja)",
@@ -876,7 +873,6 @@ A smaller value reduces the processing load but also decreases the detection rat
                 en: `Specify the CSS to apply to the page.`,
             },
             data: CUSTOM_CSS,
-            _data: CUSTOM_CSS,
             input: "textarea",
             advanced: true,
         },
@@ -891,8 +887,7 @@ A smaller value reduces the processing load but also decreases the detection rat
                 en: `This specifies the interval for detecting page updates.
 A larger value reduces the processing load but may potentially delay the initial speed of hiding.`,
             },
-            data: BODY_OBS_TIMEOUT,
-            _data: BODY_OBS_TIMEOUT,
+            data: 3000,
             input: "number",
             min: 100,
             advanced: true,
@@ -914,8 +909,7 @@ Even if you refresh the page, you can quickly hide objects detected in the past.
 Falsely detected accounts remain hidden.
 Please use it in conjunction with [Excluded User]. </span>`,
             },
-            data: BLACK_MEMORY,
-            _data: BLACK_MEMORY,
+            data: false,
             input: "checkbox",
             advanced: true,
         },
@@ -932,8 +926,7 @@ Please use it in conjunction with [Excluded User]. </span>`,
 <span style="color: #f00">*This feature is in beta version! !
 Even false positives are blocked without hesitation.</span>`,
             },
-            data: AUTO_BLOCK,
-            _data: AUTO_BLOCK,
+            data: false,    // trueにしてはいけない(戒め)
             input: "checkbox",
             advanced: true,
         },
@@ -983,8 +976,7 @@ If you feel that the processing is slower than before when using [Remember detec
                 en: `Automatically open the settings screen`,
             },
             input: "checkbox",
-            data: AUTO_OPEN_SETTING_MENU,
-            _data: AUTO_OPEN_SETTING_MENU,
+            data: false,
             debug: true,
         },
         debug_viewBlacklist: {
@@ -1063,6 +1055,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             highUsage: "#多量使用",
             symbolUsage: "$多量使用",
             selfCitation: "自身の引用",
+            selfCitationSub: "自身を引用?",
             recursiveDetection: "再帰的検出",
         },
         en: {
@@ -1097,6 +1090,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             highUsage: "#HighUsage",
             symbolUsage: "$HighUsage",
             selfCitation: "SelfCitation",
+            selfCitationSub: "selfCitationSub",
             recursiveDetection: "RecursiveDetection",
         },
     }
@@ -1113,6 +1107,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     const whitelist_reg = [];
     //const blackRtList_reg = [];
     const blackNameList_reg = [];
+    const subDefinitionList_reg = [];
     let allowLang_reg = /.*/;
     const excludedUsersSet = new Set();
     const msgDB = [];
@@ -1129,29 +1124,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     // もっと見るを軽量で観測する為に使用
     let existMoreTweet = false;
 
-    const kanaMap = {
-        ｶﾞ: "ガ", ｷﾞ: "ギ", ｸﾞ: "グ", ｹﾞ: "ゲ", ｺﾞ: "ゴ",
-        ｻﾞ: "ザ", ｼﾞ: "ジ", ｽﾞ: "ズ", ｾﾞ: "ゼ", ｿﾞ: "ゾ",
-        ﾀﾞ: "ダ", ﾁﾞ: "ヂ", ﾂﾞ: "ヅ", ﾃﾞ: "デ", ﾄﾞ: "ド",
-        ﾊﾞ: "バ", ﾋﾞ: "ビ", ﾌﾞ: "ブ", ﾍﾞ: "ベ", ﾎﾞ: "ボ",
-        ﾊﾟ: "パ", ﾋﾟ: "ピ", ﾌﾟ: "プ", ﾍﾟ: "ペ", ﾎﾟ: "ポ",
-        ｳﾞ: "ヴ", ﾜﾞ: "ヷ", ｦﾞ: "ヺ",
-        ｱ: "ア", ｲ: "イ", ｳ: "ウ", ｴ: "エ", ｵ: "オ",
-        ｶ: "カ", ｷ: "キ", ｸ: "ク", ｹ: "ケ", ｺ: "コ",
-        ｻ: "サ", ｼ: "シ", ｽ: "ス", ｾ: "セ", ｿ: "ソ",
-        ﾀ: "タ", ﾁ: "チ", ﾂ: "ツ", ﾃ: "テ", ﾄ: "ト",
-        ﾅ: "ナ", ﾆ: "ニ", ﾇ: "ヌ", ﾈ: "ネ", ﾉ: "ノ",
-        ﾊ: "ハ", ﾋ: "ヒ", ﾌ: "フ", ﾍ: "ヘ", ﾎ: "ホ",
-        ﾏ: "マ", ﾐ: "ミ", ﾑ: "ム", ﾒ: "メ", ﾓ: "モ",
-        ﾔ: "ヤ", ﾕ: "ユ", ﾖ: "ヨ",
-        ﾗ: "ラ", ﾘ: "リ", ﾙ: "ル", ﾚ: "レ", ﾛ: "ロ",
-        ﾜ: "ワ", ｦ: "ヲ", ﾝ: "ン",
-        ｧ: "ァ", ｨ: "ィ", ｩ: "ゥ", ｪ: "ェ", ｫ: "ォ",
-        ｯ: "ッ", ｬ: "ャ", ｭ: "ュ", ｮ: "ョ",
-        "｡": "。", "､": "、", ｰ: "ー",
-        "｢": "「", "｣": "」", "･": "・",
-    };
-    const kanaReg = new RegExp("(" + Object.keys(kanaMap).join("|") + ")", "g");
     const spaceRegList = [
         /[ 　\t]/gu,
         /[\u00A0\u00AD\u034F\u061C]/gu,
@@ -1163,18 +1135,20 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         /[\u{1D159}\u{1D173}-\u{1D17A}]/gu,
     ];
     const othToHiraRegList = [
-        [kanaReg, (ch) => kanaMap[ch]],
-        [/ﾞ/g, "゛"],
-        [/ﾟ/g, "゜"],
         [/[ア-ヺ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60)],
-        [/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)],
         [/[”“″‶〝‟]/gu, '"'],
         [/[’‘′´‛‵＇]/gu, "'"],
-        [/￥/g, "\\"],
-        [/〜/g, "~"],
     ];
+    const cleanNameReg = /\(\)\[\]\s/gu;
     const CrLfReg = /[\r\n]/gu;
     const spaceReg = / /g;
+
+    // 元データ保存
+    for (let key in SETTING_LIST) {
+        if (SETTING_LIST[key].data !== undefined) {
+            SETTING_LIST[key]._data = SETTING_LIST[key].data;
+        }
+    }
 
     log("起動中...");
 
@@ -1252,6 +1226,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             //regRestoration("blackRtTextReg",blackRtList_reg);
             // ブラック名前リスト
             regRestoration("blackNameReg", blackNameList_reg);
+            // サブ垢定義用表現リスト
+            regRestoration("subDefinitionReg", subDefinitionList_reg);
+
 
             // 除外idリスト
             let spText = SETTING_LIST.excludedUsers.data
@@ -1650,6 +1627,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             messageData._nsOneLoadFlag = true;
         });
 
+        // 名前の正規化
+        if (messageData.name) {
+            messageData.cleanName = othToHira(messageData.name).replace(cleanNameReg, "");
+        }
+        if (messageData.reTweet?.name) {
+            messageData.reTweet.cleanName = othToHira(messageData.reTweet.name.replace(cleanNameReg, ""));
+        }
+
+
         // 投稿時刻
         let time_elem = article.querySelector("time");
         if (!time_elem) {
@@ -1856,7 +1842,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                     hideComment(messageData, lang_dict.authenticatedAccount);
                     return;
                 case 12:
+                    // 投稿言語の制限
                     hideComment(messageData, `<span title="${ret[1]}">${lang_dict.unauthorizedLanguage}</span>`);
+                    return;
+                case 13:
+                    // サブ垢で己をRTすんな
+                    hideComment(messageData, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.selfCitationSub}</span>`);
                     return;
             }
         }).catch(console.warn);
@@ -1903,6 +1894,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
                 return [8];
             }
+            //サブ垢判定
+            if (SETTING_LIST.oneselfSubRetweetBlock) {
+                for (let reg of subDefinitionList_reg) {
+                    if (mesData.cleanName.replace(reg[0], "") == mesData.reTweet.cleanName.replace(reg[0], "")) {
+                        return [13, reg[1]];
+                    }
+                }
+            }
         }
         let message = mesData.cleanStr;
         if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !mesData.attach_img) {
@@ -1922,6 +1921,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             // 認証済アカウントをRTするな
             if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
                 return [8];
+            }
+            //サブ垢判定
+            if (SETTING_LIST.oneselfSubRetweetBlock) {
+                for (let reg of subDefinitionList_reg) {
+                    if (mesData.cleanName.replace(reg[0], "") == mesData.reTweet.cleanName.replace(reg[0], "")) {
+                        return [13, reg[1]];
+                    }
+                }
             }
         }
 
@@ -1963,6 +1970,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 let b = md.cleanStr;
                 let bl = md.str_len;
                 let m = Math.min(al, bl, msts);
+                if (m < msts) {
+                    continue;
+                }
                 if (m != al) {
                     a = a.substring(0, m);
                 }
@@ -2291,11 +2301,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             .split("\n");
         spText.forEach(row => {
             if (row.trim().length && !row.startsWith("!#")) {
+                let tmpReg = reRegExpStr(othToHira(row, false));
                 try {
-                    list.push([new RegExp(reRegExpStr(row), "uim"), row]);
+                    list.push([new RegExp(tmpReg, "uim"), row]);
                 }
                 catch (e) {
-                    console.error(`[${PRO_NAME}]`, e);
+                    console.error(`[${PRO_NAME}]`, tmpReg, e);
                     SETTING_LIST[tag].isError = true;
                 }
             }
@@ -2378,12 +2389,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     //全ての文字を共通化
-    function othToHira(str) {
-        str = uspTosp(str);
+    function othToHira(str, useLowerCase = true) {
+        str = uspTosp(str).normalize("NFKC");
         othToHiraRegList.forEach(regs => {
             str = str.replace(...regs);
         });
-        return str.toLowerCase();
+        if (useLowerCase) {
+            str = str.toLowerCase();
+        }
+        return str;
     }
 
     // 困った時のレーベンシュタイン距離
