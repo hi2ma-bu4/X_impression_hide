@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.12.1
+// @version             1.12.2
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -104,6 +104,10 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# 陰謀的単語
 人口地震
+
+!# 炎上商法
+炎上覚悟で
+!# 大切なことを?言います|断言します|何度も言いますが|勘違いしてい?る人が多いですが
 
 !# タイ語のハッシュタグを含む場合
 #[\\u0E00-\\u0F7F]+
