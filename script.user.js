@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.13.4
+// @version             1.13.5
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -49,7 +49,6 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 */
 /* todo
-・親ツイートの分別・判定
 ・検知率を上げる
     ・あやしい日本語の検知(多分自分の実力じゃ無理)
     ・フィルターをもっと有能に
@@ -72,6 +71,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     // スマホ判定
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+    const VERSION = "v1.13.5"
 
     // ここから設定
     const DEBUG = false;
@@ -101,6 +101,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# 文章名指し
 この情報を共有していただきありがとうございます
+これはどういう意味ですか
 
 !# 陰謀的単語
 人口地震
@@ -773,7 +774,7 @@ It will only appear on detected posts.
 The value is the line of permission. (Example: 1 hides 2 or more posts)
 Specifying 0 disables this setting.`,
             },
-            data: 0,// ui変更で動かなくなったので一時的に0 2
+            data: 2,
             input: "number",
             min: 0,
         },
@@ -788,7 +789,7 @@ Specifying 0 disables this setting.`,
                 en: `Specify the maximum number of quote RT replies for one user in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 0,// ui変更で動かなくなったので一時的に0 1
+            data: 1,
             input: "number",
             min: 0,
         },
@@ -803,7 +804,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
                 en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 0,// ui変更で動かなくなったので一時的に0 1
+            data: 1,
             input: "number",
             min: 0,
         },
@@ -1050,6 +1051,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         ja: {
             // 日本語
             menu_warn: /* html */ `
+<small>現在のバージョン: ${VERSION}</small><br>
 <small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
 <small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`,
             menu_advanced: /* html */ `
@@ -1085,6 +1087,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         en: {
             // 英語
             menu_warn: /* html */ `
+<small>Current version: ${VERSION}</small><br>
 <small style="color:#d00">If you have saved the changes, please refresh the page.</small><br>
 <small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`,
             menu_advanced: /* html */ `
@@ -1706,7 +1709,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 if (attach_img) {
                     for (let img of attach_img) {
                         if (/^https?:\/\/pbs\.twimg\.com\/media\//.test(img.src)) {
-                            // 画像    
+                            // 画像
                             messageData.attach_img = true;
                             break;
                         }
@@ -2030,7 +2033,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 let am = mesData.dateTime.getTime();
                 let bm = md.dateTime.getTime();
                 if (am == bm && mesData.id == md.id && mesData.cleanStr == md.cleanStr) {
-                    console.log(mesData);
                     return [-1];
                 }
 
