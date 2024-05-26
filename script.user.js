@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.12.3
+// @version             1.13.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -24,9 +24,9 @@
 // @compatible          firefox
 // @compatible          kiwi
 // @grant               GM.addStyle
-// @grant               GM_setValue
-// @grant               GM_getValue
-// @grant               GM_deleteValue
+// @grant               GM.setValue
+// @grant               GM.getValue
+// @grant               GM.deleteValue
 // @grant               GM.registerMenuCommand
 // @run-at              document-idle
 // @noframes
@@ -1174,14 +1174,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         autoClose: true
     });
 
-    function init() {
+    async function init() {
         // 親id取得
         setParentId();
 
-        {
-            // 設定呼び出し
-            log("設定読み込み...開始");
-            let saveData = GM_getValue(SETTING_SAVE_KEY, null);
+        // 設定呼び出し
+        log("設定読み込み...開始");
+        try{
+            let saveData = await GM.getValue(SETTING_SAVE_KEY, null);
             if (saveData != null) {
                 let jsonData = null;
                 try {
@@ -1198,33 +1198,40 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                     }
                 }
             }
-            lang_dict = LANGUAGE_DICT[SETTING_LIST?.language?.data ?? "ja"];
-            log("設定読み込み...完了");
         }
+        catch(e){
+                console.error(e);
+        };
+        lang_dict = LANGUAGE_DICT[SETTING_LIST?.language?.data ?? "ja"];
+        log("設定読み込み...完了");
 
         //検知id再取得
         if (SETTING_LIST.blackMemory.data) {
             log("検知済id読み込み...開始");
-            let bd = GM_getValue(BLACK_MEMORY_KEY, null);
-            if (bd != null) {
-                let jsonData = null;
-                try {
-                    jsonData = JSON.parse(bd);
-                }
-                catch (e) {
-                    console.error(e);
-                }
-                if (jsonData != null) {
-                    for (let i = 0, li = jsonData.length; i < li; i++) {
-                        let id = jsonData[i];
-                        if (id.length > 1 && id.startsWith("@")) {
-                            blacklist_id.add(id);
-                        }
-                        else {
-                            log("破損id:" + id);
+            try{
+                let bd = await GM.getValue(BLACK_MEMORY_KEY, null);
+                if (bd != null) {
+                    let jsonData = null;
+                    try {
+                        jsonData = JSON.parse(bd);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                    if (jsonData != null) {
+                        for (let i = 0, li = jsonData.length; i < li; i++) {
+                            let id = jsonData[i];
+                            if (id.length > 1 && id.startsWith("@")) {
+                                blacklist_id.add(id);
+                            }
+                            else {
+                                log("破損id:" + id);
+                            }
                         }
                     }
                 }
+            }catch(e){
+                console.error(e);
             }
             log("検知済id読み込み...完了");
         }
@@ -2215,7 +2222,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
     }
 
     // データ保存
-    function menuSave() {
+    async function menuSave() {
         log("設定保存...開始");
         for (let key in SETTING_LIST) {
             let item = SETTING_LIST[key];
@@ -2269,7 +2276,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
             }
         }
         try {
-            GM_setValue(SETTING_SAVE_KEY, JSON.stringify(dic));
+            await GM.setValue(SETTING_SAVE_KEY, JSON.stringify(dic));
         }
         catch (e) {
             console.error(e);
@@ -2278,20 +2285,20 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         menuClose();
     }
 
-    function menuReset() {
+    async function menuReset() {
         let cf = lang_dict.sureReset;
         if (confirm(cf)) {
             log("リセット処理実行");
-            GM_deleteValue(SETTING_SAVE_KEY);
+            await GM.deleteValue(SETTING_SAVE_KEY);
             location.reload();
         }
     }
 
-    function blacklistSave() {
+    async function blacklistSave() {
         if (SETTING_LIST.blackMemory.data) {
             log("検知済id保存...開始");
             try {
-                GM_setValue(BLACK_MEMORY_KEY, JSON.stringify(Array.from(blacklist_id)));
+                await GM.setValue(BLACK_MEMORY_KEY, JSON.stringify(Array.from(blacklist_id)));
             }
             catch (e) {
                 console.error(e);
@@ -2300,11 +2307,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }
     }
 
-    function blacklistReset() {
+    async function blacklistReset() {
         let cf = lang_dict.sureReset;
         if (confirm(cf)) {
             log("リセット処理実行");
-            GM_deleteValue(BLACK_MEMORY_KEY);
+            await GM.deleteValue(BLACK_MEMORY_KEY);
             location.reload();
         }
     }
