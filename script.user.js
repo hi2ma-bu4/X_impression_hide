@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.13.2
+// @version             1.13.3
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -16,6 +16,8 @@
 // @match               *://twitter.com/*
 // @match               *://x.com/*
 // @icon                data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB7ElEQVR4Ae1XMZLCMAwUdw0ldJQ8ATpKnkBJByUd8ALyA/gBdJTQUtHS8QT4AaRM5ctmThmfogQ75CYNmhGTbGJr45Vk0yAiQzXaF9VsHwIZAofDgYwxqo9GI/K16/X6cqyxvdVqmdvtZh6PhwmCIHXcw7vdrpFj8ny9XhsYxhe8lwWHw2EycLFYpNh0Ok2w8/nsFHy1WrkE1wnAN5tNMkGv10ux3W6XIab5fD5P3ovldCGrP2Ap4LiW8uRJAcIwe1wpArYU0FJimhQgxaQ9cqX4BZYCgSVmS8HBfRP1JQEsY1xKGSmAcTC+l0QrIWDraicVMBBA4O1265ScpQnAMbkMwphjub1HAI7EkxoDK7n0/gQQGATsCmDMo+z++Hf8E5CjPZ9PiqKIZrMZhWFIl8slxcbjMTWbTTqdTuRrXoz5i2WXRIL+WxWw2+Uml13rnJUT4K9E9nMFaF3SxiojoO1u2rJzl4z3/+oIcHBMLiUp2rDe3ozg+BIYtNee87KjGzLGndPx7JD/0K7xog2Gl30ymaSY1jm9CPhsrXnnBK1zOhHgCWWtF7l2TtA6p3S1E+73exoMBrRcLul4PJKL3e93arfbSUeMA1O/36eYPHU6nWQu7pyaqRlfZnezV05anhSN34va7PPXrHYCP+VaTG3LBV1KAAAAAElFTkSuQmCC
+// @updateURL           https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
+// @downloadURL         https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @supportURL          https://github.com/hi2ma-bu4/X_impression_hide
 // @supportURL          https://greasyfork.org/ja/scripts/484303-twitter-旧-𝕏-のインプレッション小遣い稼ぎ野郎どもをdisplay-none-するやつ
 // @compatible          chrome
@@ -30,8 +32,6 @@
 // @grant               GM.registerMenuCommand
 // @run-at              document-idle
 // @noframes
-// @downloadURL https://update.greasyfork.org/scripts/484303/Twitter%28%E6%97%A7%3A%F0%9D%95%8F%29%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display%3Anone%3B%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4.user.js
-// @updateURL https://update.greasyfork.org/scripts/484303/Twitter%28%E6%97%A7%3A%F0%9D%95%8F%29%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display%3Anone%3B%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4.meta.js
 // ==/UserScript==
 
 
@@ -268,6 +268,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     const EX_MENU_OPEN_CLASS = EX_MENU_ID + "_open";
     const EX_MENU_ITEM_BASE_ID = EX_MENU_ID + "_item_";
     const EX_MENU_ITEM_ERROR_CLASS = EX_MENU_ID + "_err";
+    // Userscripts対応(ゴリ押し)
+    const EX_MENU_OPEN_BUTTON = EX_MENU_ID + "_openBtn";
 
     const OBS_QUERY = "section > div > div:has(article)";
     const RE_QUERY = `div:has(div > div > article):not(.${CHECK_CLASS})`;
@@ -385,6 +387,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 .${LOG_CLASS} input[type=button] {
     cursor: pointer;
     background-color: rgba(0,0,0,0);
+    border: white 2px outset;
 }
 .${LOG_CLASS} input[type=button]:hover {
     background-color: rgba(29, 155, 240, .5);
@@ -448,6 +451,14 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 .${EX_MENU_ITEM_ERROR_CLASS} {
     color: red;
     margin: 0;
+}
+
+#${EX_MENU_OPEN_BUTTON} {
+    background: transparent;
+    font-weight: bold;
+    position: fixed;
+    top: 0;
+    right: 0;
 }
 `;
 
@@ -762,7 +773,7 @@ It will only appear on detected posts.
 The value is the line of permission. (Example: 1 hides 2 or more posts)
 Specifying 0 disables this setting.`,
             },
-            data: 2,
+            data: 0,// ui変更で動かなくなったので一時的に0 2
             input: "number",
             min: 0,
         },
@@ -777,7 +788,7 @@ Specifying 0 disables this setting.`,
                 en: `Specify the maximum number of quote RT replies for one user in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 1,
+            data: 0,// ui変更で動かなくなったので一時的に0 1
             input: "number",
             min: 0,
         },
@@ -792,7 +803,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
                 en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 1,
+            data: 0,// ui変更で動かなくなったので一時的に0 1
             input: "number",
             min: 0,
         },
@@ -1173,6 +1184,18 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
         }, {
             accessKey: "s",
             autoClose: true
+        });
+    }
+    else{
+        let btn = document.createElement("input");
+        btn.id = EX_MENU_OPEN_BUTTON;
+        btn.addEventListener("click", () => {
+            menuOpen();
+        });
+        btn.type = "button";
+        btn.value = "disp:menu";
+        waitForKeyElements(`body`, e => {
+            e.appendChild(btn);
         });
     }
 
@@ -1748,6 +1771,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
         Promise.all(pro).then(() => {
             let ret = commentFilter(messageData);
+            let id;
             switch (ret[0]) {
                 case -2:
                     // 処理済
@@ -1756,7 +1780,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                     // 取得,判定済投稿
                     return;
                 case 0:
-                    let id = messageData.id;
+                    id = messageData.id;
                     if (msgDB_id.has(id)) {
                         let bu = messageData.base_url;
                         // 連投検出
@@ -2006,6 +2030,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 let am = mesData.dateTime.getTime();
                 let bm = md.dateTime.getTime();
                 if (am == bm && mesData.id == md.id && mesData.cleanStr == md.cleanStr) {
+                    console.log(mesData);
                     return [-1];
                 }
 
@@ -2031,8 +2056,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
                 }
             }
         }
-
-
         return [0];
     }
 
