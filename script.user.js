@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://snowshome.page.link/p
-// @version             1.13.5
+// @version             1.13.6
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -71,7 +71,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     // スマホ判定
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    const VERSION = "v1.13.5"
+    const VERSION = "v1.13.6";
 
     // ここから設定
     const DEBUG = false;
@@ -774,7 +774,7 @@ It will only appear on detected posts.
 The value is the line of permission. (Example: 1 hides 2 or more posts)
 Specifying 0 disables this setting.`,
             },
-            data: 2,
+            data: 0, //2
             input: "number",
             min: 0,
         },
@@ -789,7 +789,7 @@ Specifying 0 disables this setting.`,
                 en: `Specify the maximum number of quote RT replies for one user in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 1,
+            data: 0, //1
             input: "number",
             min: 0,
         },
@@ -804,7 +804,7 @@ The value is specified in the same way as [Maximum number of tree replies].`,
                 en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
 The value is specified in the same way as [Maximum number of tree replies].`,
             },
-            data: 1,
+            data: 0, //1
             input: "number",
             min: 0,
         },
