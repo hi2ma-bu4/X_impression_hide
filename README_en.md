@@ -4,6 +4,9 @@
 
 [日本語版のREADMEはこちら](README.md)
 
+Currently not updating.
+If it stops working, please report it to Issues and we will fix it.
+
 ### Prerequisite
 > [!WARNING]
 > <s>This is for PC use only.</s>

@@ -4,6 +4,9 @@
 
 [English README is here](README_en.md)
 
+現在更新停止。
+動かなくなった場合はIssuesに報告して下さると修正します。
+
 ### 前提条件
 > [!WARNING]
 > <s>PC専用です</s>
