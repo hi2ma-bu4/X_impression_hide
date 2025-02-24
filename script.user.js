@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             2.1.1
+// @version             2.1.2
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -70,7 +70,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 	("use strict");
 
 	const PRO_NAME = "X_impression_hide";
-	const VERSION = "v2.1.1";
+	const VERSION = "v2.1.2";
 
 	// スマホ判定
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -720,6 +720,129 @@ idは完全一致のみ有効です。`,
 			viewOriginalTweet: "View original Tweet",
 			sureReset: "Are you sure you want to execute the reset?",
 
+			// setting menu
+			menu_visibleLog_name: "Show hidden logs",
+			menu_visibleLog_explanation: `It will remove the hidden logs from the screen.
+The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.`,
+			menu_visibleVerifyLog_name: "Certification mark displayed on hidden log",
+			menu_visibleVerifyLog_explanation: `Adds a certification mark after the name of the hidden log.
+Corporate badges are also displayed as blue badges.`,
+			menu_blackTextReg_name: "Prohibited expressions",
+			menu_blackTextReg_explanation: `Specify the text to hide.
+The description should be written using regular expressions (between the / characters).
+Half-width katakana and katakana will be automatically converted to hiragana.
+Full-width alphanumeric characters will be converted to half-width,
+ and line breaks will be converted to spaces automatically.`,
+			menu_whiteTextReg_name: "Expressions allowed",
+			menu_whiteTextReg_explanation: `Specify the text to allow.
+Matching posts will not be hidden.
+The specification method is the same as [Prohibited expressions].`,
+			menu_blackRtTextReg_name: "Prohibited RT expressions",
+			menu_blackRtTextReg_explanation: `Specify the RT source text to hide.
+The specification method is the same as [Prohibited expressions].`,
+			menu_blackNameReg_name: "Prohibited name",
+			menu_blackNameReg_explanation: `Specify the username to hide.
+The specification method is the same as [Prohibited expressions].`,
+			menu_excludedUsers_name: "Excluded users",
+			menu_excludedUsers_explanation: `The specified user ID will not be detected.
+To specify, simply write the user IDs separated by line breaks.
+Only exact matches are valid for id.`,
+			menu_allowLang_name: "Allowed languages",
+			menu_allowLang_explanation: `Specify the allowed languages.
+The description should be written using regular expressions (between the / characters).`,
+			menu_oneselfRetweetBlock_name: "Prohibition of self-quotation",
+			menu_oneselfRetweetBlock_explanation: `It hides posts that quote oneself.`,
+			menu_oneselfSubRetweetBlock_name: "Prohibition of quoting yourself in sub-text",
+			menu_oneselfSubRetweetBlock_explanation: `It hides posts that quote oneself.`,
+			menu_oneselfSubRetweetBlock_name: "Expression for sub-scale definition",
+			menu_oneselfSubRetweetBlock_explanation: `Specify the excluded characters for [Prohibit quoting yourself in sub-text].
+If you need simultaneous evaluation, use "(aaa|bbb)" as each line is evaluated one by one.
+The specification method is the same as [Prohibited expressions].`,
+			menu_emojiOnryBlock_name: "No emoji posting",
+			menu_emojiOnryBlock_explanation: `Hide posts composed only of emojis.`,
+			menu_emojiOnryNameBlock_name: "Prohibit emoji usernames",
+			menu_emojiOnryNameBlock_explanation: `Hide usernames composed only of emojis.`,
+			menu_verifyBlock_name: "Prohibition of authenticated accounts",
+			menu_verifyBlock_explanation: `It indiscriminately hides authenticated accounts.`,
+			menu_verifyRtBlock_name: "Authentication RT prohibited",
+			menu_verifyRtBlock_explanation: `Hide quoted RTs for authenticated account posts.`,
+			menu_verifyOnryFilter_name: "Authenticate accounts only",
+			menu_verifyOnryFilter_explanation: `It detects only authenticated accounts.
+Regular accounts and accounts without verification badges will no longer be blocked.`,
+			menu_formalityCare_name: "Protect your authenticated official account",
+			menu_formalityCare_explanation: `Exclude official accounts from detection.
+(Official means anything other than the blue badge)`,
+			menu_visibleBlockButton_name: "Quick block button display",
+			menu_visibleBlockButton_explanation: `Displays a button that allows you to block with one click.
+It will only appear on detected posts.`,
+			menu_visibleReportButton_name: "Quick report button display",
+			menu_visibleReportButton_explanation: `Displays a button that allows you to report with one click.
+It will only appear on detected posts.
+(Initial value is spam report)`,
+			menu_maxHashtagCount_name: "Maximum number of hashtags",
+			menu_maxHashtagCount_explanation: `It specifies the maximum number of hashtags allowed in a single post.`,
+			menu_maxSymboltagCount_name: "Maximum number of symboltags",
+			menu_maxSymboltagCount_explanation: `It specifies the maximum number of symboltags allowed in a single post.
+*Symbol tag is an expression that represents a stock by replacing # with $, such as "$TWTR"`,
+			menu_maxContributtonCount_name: "Maximum number of tree replies",
+			menu_maxContributtonCount_explanation: `Specify the maximum number of replies in one post tree.
+The value is the line of permission. (Example: 1 hides 2 or more posts)
+Specifying 0 disables this setting.`,
+			menu_maxRtCount_name: "Maximum number of RTs by one person",
+			menu_maxRtCount_explanation: `Specify the maximum number of quote RT replies for one user in one post tree.
+The value is specified in the same way as [Maximum number of tree replies].`,
+			menu_maxSameRtCount_name: "Maximum number of same RTs",
+			menu_maxSameRtCount_explanation: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
+The value is specified in the same way as [Maximum number of tree replies].`,
+			menu_msgResemblance_name: "Text similarity threshold",
+			menu_msgResemblance_explanation: `It specifies the threshold value for determining whether a text is a copied and pasted text.`,
+			menu_maxSaveTextSize_name: "Maximum text size for comparison",
+			menu_maxSaveTextSize_explanation: `It specifies the maximum number of characters for text comparison in copied and pasted posts.
+Increasing the value reduces the false positive rate but also reduces the detection rate.
+(This value is not used if the post's character count is below the maximum value.)`,
+			menu_minSaveTextSize_name: "The minimum text size that is temporarily saved and compared",
+			menu_minSaveTextSize_explanation: `This specifies the minimum number of characters for the comparison text.
+Increasing the value reduces the false detection rate as well as the detection rate.
+If it is larger than the [Maximum text size for comparison], the comparison process will not be executed.`,
+			menu_maxSaveLogSize_name: "The maximum number of posts that are temporarily saved",
+			menu_maxSaveLogSize_explanation: `This specifies the number of comparison texts to be retained.
+A smaller value reduces the processing load but also decreases the detection rate.`,
+			menu_language_name: "Language",
+			menu_language_explanation: `Set the display language.`,
+			menu_customCss_name: "Page-specific CSS settings",
+			menu_customCss_explanation: `Specify the CSS to apply to the page.`,
+			menu_bodyObsTimeout_name: "Processing wait time (in milliseconds) for page update detection",
+			menu_bodyObsTimeout_explanation: `This specifies the interval for detecting page updates.
+A larger value reduces the processing load but may potentially delay the initial speed of hiding.`,
+			menu_blackMemory_name: "Memory of detection target",
+			menu_blackMemory_explanation: `Remembers detected objects.
+Even if you refresh the page, you can quickly hide objects detected in the past.
+<span style="color: #f00">*This feature is in beta version! !
+Falsely detected accounts remain hidden.
+Please use it in conjunction with [Excluded User]. </span>`,
+			menu_autoBlock_name: "[Not recommended] Automatic block",
+			menu_autoBlock_explanation: `Automatically block detected targets.
+<span style="color: #f00">*This feature is in beta version! !
+Even false positives are blocked without hesitation.</span>`,
+			menu_resetSetting_name: "Reset settings",
+			menu_resetSetting_explanation: `Reset the settings.
+(The page will be reloaded.)
+<span style="color: #f00">Once executed, the settings cannot be restored!!!</span>`,
+			menu_resetBlackMemory_name: "Reset detected ID",
+			menu_resetBlackMemory_explanation: `Reset detected ID.
+(The page will be reloaded.)
+<span style="color: #f00">If you run it, there is a high possibility that users who have been detected/hidden will be displayed again!
+If you feel that the processing is slower than before when using [Remember detection targets], resetting it may make the processing faster. </span>`,
+			menu_debug_viewSettingMenu_name: "Automatic display of settings at startup",
+			menu_debug_viewSettingMenu_explanation: `Automatically open the settings screen`,
+			menu_debug_viewBlacklist_name: "Blacklist display",
+			menu_debug_viewBlacklist_explanation: `Output current blacklist_id to console.`,
+			menu_debug_viewMsgDB_name: "MsgDB display",
+			menu_debug_viewMsgDB_explanation: `Output current MsgDB to console.`,
+			menu_debug_reInit_name: "init rerun",
+			menu_debug_reInit_explanation: `Force DOM settings to be reset.
+Used when [Processing wait time (in milliseconds) for page update detection] is abandoned.`,
+
 			//hideComment
 			detectedElsewhere: "DetectedElsewhere",
 			authenticatedAccount: "AuthenticatedAccount",
@@ -924,14 +1047,14 @@ idは完全一致のみ有効です。`,
 			step: 1,
 		},
 		maxRtCount: {
-			initData: 0, //1
+			initData: 1,
 			input: MENU_INPUT_TYPE.num,
 			group: MENU_GROUP_TYPE.basic,
 			min: 0,
 			step: 1,
 		},
 		maxSameRtCount: {
-			initData: 0, //1
+			initData: 1,
 			input: MENU_INPUT_TYPE.num,
 			group: MENU_GROUP_TYPE.basic,
 			min: 0,
