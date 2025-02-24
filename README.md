@@ -1,6 +1,13 @@
 ## Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 
-<sub>略して「インプレゾンビをnoneするやつ」</sub>
+![GitHub License](https://img.shields.io/github/license/hi2ma-bu4/X_impression_hide)
+![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/484303)
+
+![GitHub Release](https://img.shields.io/github/v/release/hi2ma-bu4/X_impression_hide?label=github)
+![Greasy Fork Version](https://img.shields.io/greasyfork/v/484303)
+
+
+<sub>略して「#インプレゾンビをnoneするやつ」</sub>
 
 [English README is here](README_en.md)
 
