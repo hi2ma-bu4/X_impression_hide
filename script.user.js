@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             1.13.12
+// @version             1.13.13
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -20,13 +20,13 @@
 // @updateURL           https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @downloadURL         https://github.com/hi2ma-bu4/X_impression_hide/raw/main/script.user.js
 // @supportURL          https://github.com/hi2ma-bu4/X_impression_hide
-// @supportURL          https://greasyfork.org/ja/scripts/484303-twitter-旧-𝕏-のインプレッション小遣い稼ぎ野郎どもをdisplay-none-するやつ
+// @supportURL          https://greasyfork.org/ja/scripts/484303
 // @compatible          chrome
 // @compatible          edge
-// @compatible          opera chromium製なので動くと仮定
+// @compatible          opera chromium製なので動くと仮定(It's made with chromium so I assume it works)
 // @compatible          firefox
 // @compatible          kiwi
-// @compatible          safari 確実に動く事は保証しません
+// @compatible          safari 確実に動く事は保証しません(I can't guarantee that it will work)
 // @grant               GM.addStyle
 // @grant               GM.setValue
 // @grant               GM.getValue
@@ -83,11 +83,16 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# プロフィールメッセージを異常に推してる人
 ((初|はじ)めまして|こんにち[はわ]|こんばん[はわ]|やっほ|[き気]になった|良かったら).*?ぷろふ
-ぷろふ.*の(確認|チェック|check)
+ぷろふ.*?の(確認|チェック|check)
+(follow|フォロー).*?の(確認|チェック|check)
 (^(連絡|絡み)|[→⇒➡]).*(よろ|おねがいします|返事)
 
 !# chatGPTのエラーメッセージを取り敢えず対処
 ^申し訳ありません.*?(過激な表現や性的な内容|不適切なコンテンツや言葉).*?他の(質問や話題|トピックで質問)があれば.*?。$
+
+!# 謎投資話
+観察.*?毎日.*?銘柄.*?[万萬]円
+偶然.*?株.*?[万萬]円
 
 !# chatGPT構文
 ですね!.+(です|ね)[!。]$
@@ -164,6 +169,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# エロ垢抹消
 ぷろふ.*(確認|ちぇっく|check)
 おふぱこ
+
+!# 謎投資話
+NFT|投資
 
 !# 中国語のなんかよく見るやつ
 反差
