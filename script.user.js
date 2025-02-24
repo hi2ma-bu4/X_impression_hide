@@ -5,14 +5,14 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             1.13.13
+// @version             2.1.1
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
 // @description:zh-CN   用于隐藏、阻止和报告 Twitter 上的垃圾邮件的工具。
 // @description:zh-TW   用於隱藏、封鎖和報告 Twitter 上的垃圾郵件的工具。
 // @author              tromtub(snows)
-// @license             GPL-3.0
+// @license             LGPL-2.1
 // @match               *://twitter.com/*
 // @match               *://x.com/*
 // @match               *://tweetdeck.twitter.com/*
@@ -67,18 +67,20 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 */
 
 (function () {
-	"use strict";
+	("use strict");
+
+	const PRO_NAME = "X_impression_hide";
+	const VERSION = "v2.1.1";
+
 	// スマホ判定
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-	const VERSION = "v1.13.11";
 
 	// ここから設定
 	const DEBUG = false;
 
-	// 初期値(定数)
-	const LANGUAGE = "ja";
-
+	// ==========================================================================================
+	// 設定初期値(定数)
+	// ==========================================================================================
 	const BLACK_TEXT_REG = `!# 行頭が"!#"だとコメント
 
 !# プロフィールメッセージを異常に推してる人
@@ -137,6 +139,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ^勇敢一点我们在.*就有故事
 ^只要你主动一点点我们就会有机会.*线下
 `;
+	// --------------------------------------------------
 	const WHITE_TEXT_REG = `!# 同上
 
 !# 例としてMisskey構文に対応してみる
@@ -150,6 +153,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 !# jQuake
 
 `;
+	// --------------------------------------------------
 	/*
         const BLACK_RT_TEXT_REG = `!# 同上
     
@@ -158,6 +162,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
     free.*(vid|video)
     `;
     */
+	// --------------------------------------------------
 	const BLACK_NAME_REG = `!# 同上
 
 !# アラビア語のみで構成
@@ -179,6 +184,7 @@ NFT|投資
 同城
 可约
 `;
+	// --------------------------------------------------
 	const EXCLUDED_USERS = `!# 同上
 
 !# 例として製作者のidを指定
@@ -247,70 +253,46 @@ NFT|投資
 @JRE_Super_Exp
 @odakyuline_info
 `;
-
-	//todo: プロフィールメッセージフィルター機能を作る
-	//Bimbo
-
+	// TODO: プロフィールメッセージフィルター機能を作る
+	// Bimbo
+	// --------------------------------------------------
 	const ALLOW_LANG = "ja|en|es|zh|ko|pt|qme|qam|und";
-
+	// --------------------------------------------------
 	const SUB_DEFINITION_SUB = `!# 同上
 
 !# それっぽいのをまとめとく
 ((season|シーズン).{0,2}(\\d{1,2}|[IVX]{1,5})|サブ|ファースト|セカンド|サード|新・?|ファイナル|(\\d{1,4}|[一二三四五六七八九十百千万壱弐参肆伍陸漆捌玖拾陌阡萬廿丗卅世]+)代目|sub|first|1st|second|2nd|third|3rd|fourth|4th|new|final)
-
 `;
 
-	const PRO_NAME = "X_impression_hide";
-	const SETTING_SAVE_KEY = PRO_NAME + "_json";
-	const BLACK_MEMORY_KEY = PRO_NAME + "_blackMemory";
-
-	const PARENT_CLASS = PRO_NAME + "_parent";
-	const CHECK_CLASS = PRO_NAME + "_check";
-	const HIDE_CLASS = PRO_NAME + "_none";
-	const LOG_CLASS = PRO_NAME + "_log";
-	const MORE_TWEET_CLASS = PRO_NAME + "_moreTweet";
-	const VERIFY_CLASS = PRO_NAME + "_verify";
-	const PC_FLAG_CLASS = PRO_NAME + "_pc";
-	const MOBILE_FLAG_CLASS = PRO_NAME + "_mobile";
+	// ==========================================================================================
+	// 要素命名用 定数
+	// ==========================================================================================
 	const EX_MENU_ID = PRO_NAME + "_menu";
-	const EX_MENU_OPEN_CLASS = EX_MENU_ID + "_open";
-	const EX_MENU_ITEM_BASE_ID = EX_MENU_ID + "_item_";
-	const EX_MENU_ITEM_ERROR_CLASS = EX_MENU_ID + "_err";
-	// Userscripts対応(ゴリ押し)
-	const EX_MENU_OPEN_BUTTON = EX_MENU_ID + "_openBtn";
+	/**
+	 * 独自利用id,class名定義
+	 * @readonly
+	 * @enum {string}
+	 */
+	const ELEM_NAME_DICT = {
+		PARENT_CLASS: PRO_NAME + "_parent",
+		CHECK_CLASS: PRO_NAME + "_check",
+		HIDE_CLASS: PRO_NAME + "_none",
+		LOG_CLASS: PRO_NAME + "_log",
+		MORE_TWEET_CLASS: PRO_NAME + "_moreTweet",
+		VERIFY_CLASS: PRO_NAME + "_verify",
+		PC_FLAG_CLASS: PRO_NAME + "_pc",
+		MOBILE_FLAG_CLASS: PRO_NAME + "_mobile",
+		EX_MENU_ID: EX_MENU_ID,
+		EX_MENU_OPEN_CLASS: EX_MENU_ID + "_open",
+		EX_MENU_ITEM_BASE_ID: EX_MENU_ID + "_item_",
+		EX_MENU_ITEM_ERROR_CLASS: EX_MENU_ID + "_err",
+		// Userscripts対応(ゴリ押し)
+		EX_MENU_OPEN_BUTTON: EX_MENU_ID + "_openBtn",
+	};
 
-	const OBS_QUERY = "section > div > div:has(article)";
-	const RE_QUERY = `div:has(div > div > article):not(.${CHECK_CLASS})`;
-	const NAME_SPACE_QUERY = `[data-testid="User-Name"]`;
-	const NAME_QUERY = `:not(span) > span > span`;
-	const ID_QUERY = "div > span:not(:has(span))";
-	const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
-	const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
-	const IMAGE_QUERY = `a img, [data-testid="videoComponent"] video`;
-	const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
-	let MENU_DISP_QUERY;
-	if (isMobile) {
-		MENU_DISP_QUERY = "#layers [role=menu] [role=group]";
-	} else {
-		MENU_DISP_QUERY = "[role=group] [role=menu]";
-	}
-
-	const BLOCK_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`, "[role=alertdialog] [role=group] [role=button] div"];
-
-	/*
-    3行目は場合によっては消す
-    */
-	const REPORT_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M3 2h18"])`, ["[role=radiogroup] label", 5], "[role=group]:has([role=radiogroup]) [role=button]:not(:has(svg))", ["[role=group] [role=button]:not(:has(svg))", 1], ["__wait__", 1000], ["[role=group] [role=button]:not(:has(svg))", 1]];
-
-	const VERIFY_SVG = `
-    <svg class="${VERIFY_CLASS}" viewBox="0 0 22 22" role="img" data-testid="icon-verified">
-        <g>
-            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z">
-            </path>
-        </g>
-    </svg>
-`;
-
+	// ==========================================================================================
+	// css初期値(定数)
+	// ==========================================================================================
 	const BASE_CSS = /* css */ `
 #${EX_MENU_ID} {
     display: none;
@@ -321,7 +303,7 @@ NFT|投資
     z-index: 2000;
 }
 /* 積み防止 */
-#${EX_MENU_ID}.${EX_MENU_OPEN_CLASS} {
+#${EX_MENU_ID}.${ELEM_NAME_DICT.EX_MENU_OPEN_CLASS} {
     display: block !important;
     visibility: visible !important;
 }
@@ -341,7 +323,7 @@ NFT|投資
     background: #fafafaee;
 }
 
-#${EX_MENU_ITEM_BASE_ID}__btns {
+#${ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID}__btns {
     position: sticky;
     right: 0;
     bottom: 0;
@@ -349,45 +331,45 @@ NFT|投資
 }
 
 /* ツイート非表示 */
-.${HIDE_CLASS}:has(.${LOG_CLASS} input[type=checkbox]:not(:checked)) > div:not(.${LOG_CLASS}), .${HIDE_CLASS}:not(:has(.${LOG_CLASS})) > div:not(.${LOG_CLASS}) {
+.${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS} input[type=checkbox]:not(:checked)) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}), .${ELEM_NAME_DICT.HIDE_CLASS}:not(:has(.${ELEM_NAME_DICT.LOG_CLASS})) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}) {
     display: none;
 }
 
-.${HIDE_CLASS}:has(.${LOG_CLASS}):not(:has(article)) {
+.${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS}):not(:has(article)) {
     display: none;
 }
 
 /* 検出内容の表示設定 */
-.${HIDE_CLASS} {
+.${ELEM_NAME_DICT.HIDE_CLASS} {
     background: #aaaa;
 }
 
 /* 以下非表示後の表示内容設定 */
-.${LOG_CLASS} {
+.${ELEM_NAME_DICT.LOG_CLASS} {
     display: flex;
     justify-content: space-between;
 }
 
-.${LOG_CLASS} input[type=checkbox] {
+.${ELEM_NAME_DICT.LOG_CLASS} input[type=checkbox] {
     display: none;
 }
-.${LOG_CLASS} label {
+.${ELEM_NAME_DICT.LOG_CLASS} label {
     cursor: pointer;
 }
-.${LOG_CLASS} label:hover {
+.${ELEM_NAME_DICT.LOG_CLASS} label:hover {
     text-decoration: underline;
 }
 
-.${LOG_CLASS} input[type=button] {
+.${ELEM_NAME_DICT.LOG_CLASS} input[type=button] {
     cursor: pointer;
     background-color: rgba(0,0,0,0);
     border: white 2px outset;
 }
-.${LOG_CLASS} input[type=button]:hover {
+.${ELEM_NAME_DICT.LOG_CLASS} input[type=button]:hover {
     background-color: rgba(29, 155, 240, .5);
 }
 
-.${VERIFY_CLASS} {
+.${ELEM_NAME_DICT.VERIFY_CLASS} {
     max-width: 20px;
     max-height: 20px;
     color: rgb(29, 155, 240);
@@ -399,7 +381,7 @@ NFT|投資
 }
 
 /* メニュー表示設定 */
-#${EX_MENU_ID}.${MOBILE_FLAG_CLASS} {
+#${EX_MENU_ID}.${ELEM_NAME_DICT.MOBILE_FLAG_CLASS} {
     font-size: 0.8em;
 }
 #${EX_MENU_ID} textarea {
@@ -416,38 +398,42 @@ NFT|投資
 }
 
 #${EX_MENU_ID} input[type=checkbox] + span::after {
-    content: "無効";
-}
-#${EX_MENU_ID} input[type=checkbox]:checked + span::after {
-    content: "有効";
-}
-#${EX_MENU_ID}[lang=en] input[type=checkbox] + span::after {
     content: "Invalid";
 }
-#${EX_MENU_ID}[lang=en] input[type=checkbox]:checked + span::after {
+#${EX_MENU_ID} input[type=checkbox]:checked + span::after {
     content: "Validity";
+}
+#${EX_MENU_ID}[lang=ja] input[type=checkbox] + span::after {
+    content: "無効";
+}
+#${EX_MENU_ID}[lang=ja] input[type=checkbox]:checked + span::after {
+    content: "有効";
+}
+
+#${EX_MENU_ID} summary {
+    cursor: pointer;
 }
 
 #${EX_MENU_ID} details {
     margin-top: 1em;
 }
 
-.${EX_MENU_ITEM_BASE_ID}_name {
+.${ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID}_name {
     font-size: 1.3em;
     margin-bottom: 3px;
     margin-left: 2px;
 }
-.${EX_MENU_ITEM_BASE_ID}_name + p {
+.${ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID}_name + p {
     font-size: .8em;
     margin: 0 4px;
 }
 
-.${EX_MENU_ITEM_ERROR_CLASS} {
+.${ELEM_NAME_DICT.EX_MENU_ITEM_ERROR_CLASS} {
     color: red;
     margin: 0;
 }
 
-#${EX_MENU_OPEN_BUTTON} {
+#${ELEM_NAME_DICT.EX_MENU_OPEN_BUTTON} {
     background: transparent;
     font-weight: bold;
     position: fixed;
@@ -459,606 +445,102 @@ NFT|投資
 
 /* iPad 第1~3世代（画面横）*/
 @media (max-device-width: 1024px) and (orientation: landscape) {
-    #${EX_MENU_OPEN_BUTTON} {
+    #${ELEM_NAME_DICT.EX_MENU_OPEN_BUTTON} {
         width: 20em;
         height: 4em;
     }
 }
 /* iPad 第4世代*/
 @media screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) {
-    #${EX_MENU_OPEN_BUTTON} {
+    #${ELEM_NAME_DICT.EX_MENU_OPEN_BUTTON} {
         width: 20em;
         height: 4em;
     }
 }
 
 `;
+	// --------------------------------------------------
 	const CUSTOM_CSS = /* css */ ``;
 
-	const SETTING_LIST = {
-		visibleLog: {
-			name: {
-				ja: "非表示ログを表示",
-				en: "Show hidden logs",
-			},
-			explanation: {
-				ja: `非表示にしたログを画面から消します。
-画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。`,
-				en: `It will remove the hidden logs from the screen.
-The screen will be peaceful, but the reasons for hiding the posts and the original posts will no longer be visible.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		visibleVerifyLog: {
-			name: {
-				ja: "非表示ログに認証マーク表示",
-				en: "Certification mark displayed on hidden log",
-			},
-			explanation: {
-				ja: `非表示にしたログの名前の後ろに認証マークを追加します。
-企業バッジでも青バッジで表示されます。`,
-				en: `Adds a certification mark after the name of the hidden log.
-Corporate badges are also displayed as blue badges.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		blackTextReg: {
-			name: {
-				ja: "禁止する表現",
-				en: "Prohibited expressions",
-			},
-			explanation: {
-				ja: `非表示にするテキストを指定します。
-記述方法は正規表現(/の間部分)で記述します。
-(半角カタカナ、カタカナはひらがなに自動変換されます)
-(全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます)`,
-				en: `Specify the text to hide.
-The description should be written using regular expressions (between the / characters).
-Half-width katakana and katakana will be automatically converted to hiragana.
-Full-width alphanumeric characters will be converted to half-width,
- and line breaks will be converted to spaces automatically.`,
-			},
-			data: BLACK_TEXT_REG,
-			input: "textarea",
-		},
-		whiteTextReg: {
-			name: {
-				ja: "許可する表現",
-				en: "Expressions allowed",
-			},
-			explanation: {
-				ja: `許可するテキストを指定します。
-一致する投稿は非表示の対象になりません。
-指定方法などは[禁止する表現]と同じです。`,
-				en: `Specify the text to allow.
-Matching posts will not be hidden.
-The specification method is the same as [Prohibited expressions].`,
-			},
-			data: WHITE_TEXT_REG,
-			input: "textarea",
-		},
-		/*blackRtTextReg: {
-            name: {
-                ja: "禁止するRT表現",
-                en: "Prohibited RT expressions",
-            },
-            explanation: {
-                ja: `非表示にするRT元テキストを指定します。
-指定方法などは[禁止する表現]と同じです。`,
-                en: `Specify the RT source text to hide.
-The specification method is the same as [Prohibited expressions].`,
-            },
-            data: BLACK_RT_TEXT_REG,
-            _data: BLACK_RT_TEXT_REG,
-            input: "textarea",
-        },*/
-		blackNameReg: {
-			name: {
-				ja: "禁止する名前",
-				en: "Prohibited name",
-			},
-			explanation: {
-				ja: `非表示にするユーザー名を指定します。
-指定方法などは[禁止する表現]と同じです。`,
-				en: `Specify the username to hide.
-The specification method is the same as [Prohibited expressions].`,
-			},
-			data: BLACK_NAME_REG,
-			input: "textarea",
-		},
-		excludedUsers: {
-			name: {
-				ja: "除外ユーザー",
-				en: "Excluded users",
-			},
-			explanation: {
-				ja: `指定されたユーザーidは検知の対象になりません。
-指定方法はユーザーidを改行で区切って記述するだけです。
-idは完全一致のみ有効です。`,
-				en: `The specified user ID will not be detected.
-To specify, simply write the user IDs separated by line breaks.
-Only exact matches are valid for id.`,
-			},
-			data: EXCLUDED_USERS,
-			input: "textarea",
-		},
-		allowLang: {
-			name: {
-				ja: "許可する言語",
-				en: "Allowed languages",
-			},
-			explanation: {
-				ja: `許可する言語を指定します。
-記述方法は正規表現(/の間部分)で記述します。`,
-				en: `Specify the allowed languages.
-The description should be written using regular expressions (between the / characters).`,
-			},
-			data: ALLOW_LANG,
-			input: "text",
-		},
-		oneselfRetweetBlock: {
-			name: {
-				ja: "自身の引用禁止",
-				en: "Prohibition of self-quotation",
-			},
-			explanation: {
-				ja: `自身を引用ツイートする投稿を非表示にします。`,
-				en: `It hides posts that quote oneself.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		oneselfSubRetweetBlock: {
-			name: {
-				ja: "サブ垢での自身の引用禁止",
-				en: "Prohibition of quoting yourself in sub-text",
-			},
-			explanation: {
-				ja: `サブ垢での自身を引用ツイートする投稿を非表示にします。
-ユーザー名から[サブ,2nd]などを除外しての一致検索です。`,
-				en: `It hides posts that quote oneself.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		subDefinitionReg: {
-			name: {
-				ja: "サブ垢定義用表現",
-				en: "Expression for sub-scale definition",
-			},
-			explanation: {
-				ja: `[サブ垢での自身の引用禁止]での除外文字を指定します。
-1行ずつ評価していく為同時評価が必要な場合は「(aaa|bbb)」を使用して下さい。
-指定方法などは[禁止する表現]と同じです。`,
-				en: `Specify the excluded characters for [Prohibit quoting yourself in sub-text].
-If you need simultaneous evaluation, use "(aaa|bbb)" as each line is evaluated one by one.
-The specification method is the same as [Prohibited expressions].`,
-			},
-			data: SUB_DEFINITION_SUB,
-			input: "textarea",
-		},
-		emojiOnryBlock: {
-			name: {
-				ja: "絵文字投稿禁止",
-				en: "No emoji posting",
-			},
-			explanation: {
-				ja: `絵文字のみで構成された投稿を非表示にします。`,
-				en: `Hide posts composed only of emojis.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		emojiOnryNameBlock: {
-			name: {
-				ja: "絵文字ユーザー名禁止",
-				en: "Prohibit emoji usernames",
-			},
-			explanation: {
-				ja: `絵文字のみで構成されたユーザー名を非表示にします。`,
-				en: `Hide usernames composed only of emojis.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		verifyBlock: {
-			name: {
-				ja: "認証アカウント禁止",
-				en: "Prohibition of authenticated accounts",
-			},
-			explanation: {
-				ja: `認証済アカウントを無差別に非表示にします。`,
-				en: `It indiscriminately hides authenticated accounts.`,
-			},
-			data: false,
-			input: "checkbox",
-		},
-		verifyRtBlock: {
-			name: {
-				ja: "認証RT禁止",
-				en: "Authentication RT prohibited",
-			},
-			explanation: {
-				ja: `認証済アカウント投稿に対する引用RTを非表示にします。`,
-				en: `Hide quoted RTs for authenticated account posts.`,
-			},
-			data: false,
-			input: "checkbox",
-		},
-		verifyOnryFilter: {
-			name: {
-				ja: "認証アカウントのみ判定",
-				en: "Authenticate accounts only",
-			},
-			explanation: {
-				ja: `認証済アカウントのみを検知の対象にします。
-通常アカウントや認証マークの無いアカウントはブロックされなくなります。`,
-				en: `It detects only authenticated accounts.
-Regular accounts and accounts without verification badges will no longer be blocked.`,
-			},
-			data: false,
-			input: "checkbox",
-		},
-		formalityCare: {
-			name: {
-				ja: "認証公式アカウントを保護",
-				en: "Protect your authenticated official account",
-			},
-			explanation: {
-				ja: `公式アカウントを検知の対象から除外します。
-(公式とは青いバッジ以外を指します)`,
-				en: `Exclude official accounts from detection.
-(Official means anything other than the blue badge)`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		visibleBlockButton: {
-			name: {
-				ja: "クイックブロック表示",
-				en: "Quick block button display",
-			},
-			explanation: {
-				ja: `1クリックでブロックできるボタンを表示します。
-検出された投稿にしか表示されません。`,
-				en: `Displays a button that allows you to block with one click.
-It will only appear on detected posts.`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		visibleReportButton: {
-			name: {
-				ja: "クイック通報表示",
-				en: "Quick report button display",
-			},
-			explanation: {
-				ja: `1クリックで通報できるボタンを表示します。
-検出された投稿にしか表示されません。
-(初期値はスパム報告です)`,
-				en: `Displays a button that allows you to report with one click.
-It will only appear on detected posts.
-(Initial value is spam report)`,
-			},
-			data: true,
-			input: "checkbox",
-		},
-		maxHashtagCount: {
-			name: {
-				ja: "ハッシュタグの上限数",
-				en: "Maximum number of hashtags",
-			},
-			explanation: {
-				ja: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
-				en: `It specifies the maximum number of hashtags allowed in a single post.`,
-			},
-			data: 6,
-			input: "number",
-			min: 1,
-		},
-		maxSymboltagCount: {
-			name: {
-				ja: "シンボルタグの上限数",
-				en: "Maximum number of symboltags",
-			},
-			explanation: {
-				ja: `1つの投稿内でのシンボルタグの使用上限数を指定します。
-※シンボルタグとは「$TWTR」のような#を$に置き換えた株を表す表現`,
-				en: `It specifies the maximum number of symboltags allowed in a single post.
-*Symbol tag is an expression that represents a stock by replacing # with $, such as "$TWTR"`,
-			},
-			data: 1,
-			input: "number",
-			min: 1,
-		},
-		maxContributtonCount: {
-			name: {
-				ja: "ツリー返信上限数",
-				en: "Maximum number of tree replies",
-			},
-			explanation: {
-				ja: `1つの投稿ツリーでの返信上限数を指定します。
-値は許可のラインです。(例: 1で2投稿以上は非表示)
-0を指定するとこの設定は無効化されます。`,
-				en: `Specify the maximum number of replies in one post tree.
-The value is the line of permission. (Example: 1 hides 2 or more posts)
-Specifying 0 disables this setting.`,
-			},
-			data: 2, //2
-			input: "number",
-			min: 0,
-		},
-		maxRtCount: {
-			name: {
-				ja: "1人によるRT上限数",
-				en: "Maximum number of RTs by one person",
-			},
-			explanation: {
-				ja: `1つの投稿ツリーでの1ユーザーの引用RT返信上限数を指定します。
-値は[ツリー返信上限数]と同じ指定方法です。`,
-				en: `Specify the maximum number of quote RT replies for one user in one post tree.
-The value is specified in the same way as [Maximum number of tree replies].`,
-			},
-			data: 0, //1
-			input: "number",
-			min: 0,
-		},
-		maxSameRtCount: {
-			name: {
-				ja: "同一RT上限数",
-				en: "Maximum number of same RTs",
-			},
-			explanation: {
-				ja: `1つの投稿ツリーでの複数人からの同じユーザーに対する引用RT返信上限数を指定します。
-値は[ツリー返信上限数]と同じ指定方法です。`,
-				en: `Specify the maximum number of quote RT replies to the same user from multiple people in one post tree.
-The value is specified in the same way as [Maximum number of tree replies].`,
-			},
-			data: 0, //1
-			input: "number",
-			min: 0,
-		},
-		msgResemblance: {
-			name: {
-				ja: "文章類似度許可ライン",
-				en: "Text similarity threshold",
-			},
-			explanation: {
-				ja: `コピペ文章かを判別する為の基準値を指定します。`,
-				en: `It specifies the threshold value for determining whether a text is a copied and pasted text.`,
-			},
-			data: 0.85,
-			input: "number",
-			min: 0,
-			max: 1,
-			step: 0.01,
-		},
-		maxSaveTextSize: {
-			name: {
-				ja: "比較される最大テキストサイズ",
-				en: "Maximum text size for comparison",
-			},
-			explanation: {
-				ja: `コピペ投稿の文章比較の最大文字数を指定します。
-値を大きくするほど誤検知率は減り、検知率も減ります。
-(投稿の文字数が最大値以下の場合、この値は使用されません)`,
-				en: `It specifies the maximum number of characters for text comparison in copied and pasted posts.
-Increasing the value reduces the false positive rate but also reduces the detection rate.
-(This value is not used if the post's character count is below the maximum value.)`,
-			},
-			data: 80,
-			input: "number",
-			min: 0,
-		},
-		minSaveTextSize: {
-			name: {
-				ja: "一時保存・比較される最小テキストサイズ",
-				en: "The minimum text size that is temporarily saved and compared",
-			},
-			explanation: {
-				ja: `比較用文章の最小文字数を指定します。
-値が大きくするほど誤検知率は減り、検知率も減ります。
-([比較される最大テキストサイズ]より大きい場合、比較処理は実行されません)`,
-				en: `This specifies the minimum number of characters for the comparison text.
-Increasing the value reduces the false detection rate as well as the detection rate.
-If it is larger than the [Maximum text size for comparison], the comparison process will not be executed.`,
-			},
-			data: 8,
-			input: "number",
-			min: 0,
-		},
-		maxSaveLogSize: {
-			name: {
-				ja: "一時保存される投稿の最大数",
-				en: "The maximum number of posts that are temporarily saved",
-			},
-			explanation: {
-				ja: `比較用文章の保持数を指定します。
-値が小さいほど処理は軽くなりますが、検知率が減ります。`,
-				en: `This specifies the number of comparison texts to be retained.
-A smaller value reduces the processing load but also decreases the detection rate.`,
-			},
-			data: 150,
-			input: "number",
-			min: 1,
-		},
-		language: {
-			name: {
-				ja: "言語",
-				en: "Language",
-			},
-			explanation: {
-				ja: `表示言語を設定します。`,
-				en: `Set the display language.`,
-			},
-			data: LANGUAGE,
-			input: "select",
-			select: {
-				ja: "日本語(ja)",
-				en: "English(en)",
-			},
-		},
-		customCss: {
-			name: {
-				ja: "ページ適用css設定",
-				en: "Page-specific CSS settings",
-			},
-			explanation: {
-				ja: `ページへ適用するcssを指定します。`,
-				en: `Specify the CSS to apply to the page.`,
-			},
-			data: CUSTOM_CSS,
-			input: "textarea",
-			advanced: true,
-		},
-		bodyObsTimeout: {
-			name: {
-				ja: "ページ更新検知用処理待機時間(ms)",
-				en: "Processing wait time (in milliseconds) for page update detection",
-			},
-			explanation: {
-				ja: `ページ更新を検知する際の検知の更新間隔を指定します。
-値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。`,
-				en: `This specifies the interval for detecting page updates.
-A larger value reduces the processing load but may potentially delay the initial speed of hiding.`,
-			},
-			data: 3000,
-			input: "number",
-			min: 100,
-			advanced: true,
-		},
-		blackMemory: {
-			name: {
-				ja: "検知対象の記憶",
-				en: "Memory of detection target",
-			},
-			explanation: {
-				ja: `検出された対象を記憶します。
-ページを更新などしても過去に検知した対象を素早く非表示に出来ます。
-<span style="color: #f00">※この機能はbeta版です！！
-誤検知されたアカウントが非表示のままになります。
-[除外ユーザー]と併用して使用して下さい。</span>`,
-				en: `Remembers detected objects.
-Even if you refresh the page, you can quickly hide objects detected in the past.
-<span style="color: #f00">*This feature is in beta version! !
-Falsely detected accounts remain hidden.
-Please use it in conjunction with [Excluded User]. </span>`,
-			},
-			data: false,
-			input: "checkbox",
-			advanced: true,
-		},
-		autoBlock: {
-			name: {
-				ja: "【非推奨】自動ブロック",
-				en: "[Not recommended] Automatic block",
-			},
-			explanation: {
-				ja: `検出された対象を自動でブロックします。
-<span style="color: #f00">※この機能はbeta版です！！
-誤検知でも戸惑いなくブロックされます。</span>`,
-				en: `Automatically block detected targets.
-<span style="color: #f00">*This feature is in beta version! !
-Even false positives are blocked without hesitation.</span>`,
-			},
-			data: false, // trueにしてはいけない(戒め)
-			input: "checkbox",
-			advanced: true,
-		},
-		resetSetting: {
-			name: {
-				ja: "設定のリセット",
-				en: "Reset settings",
-			},
-			explanation: {
-				ja: `設定項目をリセットします。
-(ページがリロードされます)
-<span style="color: #f00">実行すると設定は復元出来ません！！！</span>`,
-				en: `Reset the settings.
-(The page will be reloaded.)
-<span style="color: #f00">Once executed, the settings cannot be restored!!!</span>`,
-			},
-			value: "Reset",
-			input: "button",
-			advanced: true,
-		},
-		resetBlackMemory: {
-			name: {
-				ja: "検知済idのリセット",
-				en: "Reset detected ID",
-			},
-			explanation: {
-				ja: `検知済idをリセットします。
-(ページがリロードされます)
-<span style="color: #f00">実行するとこれまで検知・非表示にされたユーザーが再度表示される可能性が高くなります！
-[検知対象の記憶]を使用している状況で以前より処理が重いと感じた場合、リセットすると処理が軽くなる可能性があります。</span>`,
-				en: `Reset detected ID.
-(The page will be reloaded.)
-<span style="color: #f00">If you run it, there is a high possibility that users who have been detected/hidden will be displayed again!
-If you feel that the processing is slower than before when using [Remember detection targets], resetting it may make the processing faster. </span>`,
-			},
-			value: "Reset",
-			input: "button",
-			advanced: true,
-		},
-		debug_viewSettingMenu: {
-			name: {
-				ja: "起動時設定自動表示",
-				en: "Automatic display of settings at startup",
-			},
-			explanation: {
-				ja: `設定画面を自動で開く`,
-				en: `Automatically open the settings screen`,
-			},
-			input: "checkbox",
-			data: false,
-			debug: true,
-		},
-		debug_viewBlacklist: {
-			name: {
-				ja: "blacklist表示",
-				en: "Blacklist display",
-			},
-			explanation: {
-				ja: `現在のblacklist_idをconsoleに出力する。`,
-				en: `Output current blacklist_id to console.`,
-			},
-			value: "output",
-			input: "button",
-			debug: true,
-		},
-		debug_viewMsgDB: {
-			name: {
-				ja: "MsgDB表示",
-				en: "MsgDB display",
-			},
-			explanation: {
-				ja: `現在のMsgDBをconsoleに出力する。`,
-				en: `Output current MsgDB to console.`,
-			},
-			value: "output",
-			input: "button",
-			debug: true,
-		},
-		debug_reInit: {
-			name: {
-				ja: "init再実行",
-				en: "init rerun",
-			},
-			explanation: {
-				ja: `強制的にDOM設定を再設定する。
-[ページ更新検知用処理待機時間(ms)]が仕事を放棄した際に使用。`,
-				en: `Force DOM settings to be reset.
-Used when [Processing wait time (in milliseconds) for page update detection] is abandoned.`,
-			},
-			value: "retry",
-			input: "button",
-			debug: true,
-		},
+	// ==========================================================================================
+	// 内部使用他(定数)
+	// ==========================================================================================
+	/**
+	 * メニューform分類
+	 * @readonly
+	 * @enum {string}
+	 */
+	const MENU_INPUT_TYPE = {
+		text: "text",
+		num: "number",
+		check: "checkbox",
+		textarea: "textarea",
+		select: "select",
+		btn: "button",
+	};
+	/**
+	 * メニュー分類グループ分類
+	 * @readonly
+	 * @enum {string}
+	 */
+	const MENU_GROUP_TYPE = {
+		basic: "basic",
+		advanced: "advanced",
+		debug: "debug",
+	};
+	// --------------------------------------------------
+	// 非表示id
+
+	/**
+	 * メッセージフィルターの非表示id
+	 * @readonly
+	 * @enum {number}
+	 */
+	const FILTED_HIDDEN_ID = {
+		processed: -2,
+		evaluated: -1,
+		newEntry: 0,
+		commentFilterDetection: 1,
+		commentEmojiOnly: 2,
+		textDuplication: 3,
+		highUsage: 4,
+		selfCitation: 5,
+		nameFilterDetection: 6,
+		nameEmojiOnly: 7,
+		verifyRtBlock: 8,
+		symbolUsage: 9,
+		detectedElsewhere: 10,
+		authenticatedAccount: 11,
+		unauthorizedLanguage: 12,
+		selfCitationSub: 13,
+		contributtonCount: 14,
+		rtContributtonCount: 15,
+		rtSharingSeries: 16,
 	};
 
+	// --------------------------------------------------
+	// データ保存用 定数
+	const SETTING_SAVE_KEY = PRO_NAME + "_json";
+	const BLACK_MEMORY_KEY = PRO_NAME + "_blackMemory";
+
+	// --------------------------------------------------
+	// 許可URL (ページ)
+	const ALLOW_PAGE_SET = new Set(["home", "search"]);
+	// 許可URL (ステータス)
+	const ALLOW_STATUS_SET = new Set(["status"]);
+
+	// --------------------------------------------------
+	// 翻訳key
+	const MENU_LANG_KEY = "menu_";
+	const MENU_LANG_KEY_NAME = "_name";
+	const MENU_LANG_KEY_EXPLANATION = "_explanation";
+
+	// --------------------------------------------------
+	/**
+	 * 翻訳データ
+	 * @readonly
+	 * @constant {Object.<string, Object.<string, string>>} LANGUAGE_DICT
+	 */
 	const LANGUAGE_DICT = {
 		ja: {
 			// 日本語
@@ -1078,6 +560,129 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			usageCount: "使用回数",
 			viewOriginalTweet: "元Tweetを見る",
 			sureReset: "本当にリセットを実行しますか？",
+
+			// setting menu
+			menu_visibleLog_name: "非表示ログを表示",
+			menu_visibleLog_explanation: `非表示にしたログを画面から消します。
+画面が平和になりますが、投稿を非表示にされた理由・元投稿が確認出来なくなります。`,
+			menu_visibleVerifyLog_name: "非表示ログに認証マーク表示",
+			menu_visibleVerifyLog_explanation: `非表示にしたログの名前の後ろに認証マークを追加します。
+企業バッジでも青バッジで表示されます。`,
+			menu_blackTextReg_name: "禁止する表現",
+			menu_blackTextReg_explanation: `非表示にするテキストを指定します。
+記述方法は正規表現(/の間部分)で記述します。
+(半角カタカナ、カタカナはひらがなに自動変換されます)
+(全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます)`,
+			menu_whiteTextReg_name: "許可する表現",
+			menu_whiteTextReg_explanation: `許可するテキストを指定します。
+一致する投稿は非表示の対象になりません。
+指定方法などは[禁止する表現]と同じです。`,
+			menu_blackRtTextReg_name: "禁止するRT表現",
+			menu_blackRtTextReg_explanation: `非表示にするRT元テキストを指定します。
+指定方法などは[禁止する表現]と同じです。`,
+			menu_blackNameReg_name: "禁止する名前",
+			menu_blackNameReg_explanation: `非表示にするユーザー名を指定します。
+指定方法などは[禁止する表現]と同じです。`,
+			menu_excludedUsers_name: "除外ユーザー",
+			menu_excludedUsers_explanation: `指定されたユーザーidは検知の対象になりません。
+指定方法はユーザーidを改行で区切って記述するだけです。
+idは完全一致のみ有効です。`,
+			menu_allowLang_name: "許可する言語",
+			menu_allowLang_explanation: `許可する言語を指定します。
+記述方法は正規表現(/の間部分)で記述します。`,
+			menu_oneselfRetweetBlock_name: "自身の引用禁止",
+			menu_oneselfRetweetBlock_explanation: `自身を引用ツイートする投稿を非表示にします。`,
+			menu_oneselfSubRetweetBlock_name: "サブ垢での自身の引用禁止",
+			menu_oneselfSubRetweetBlock_explanation: `サブ垢での自身を引用ツイートする投稿を非表示にします。
+ユーザー名から[サブ,2nd]などを除外しての一致検索です。`,
+			menu_oneselfSubRetweetBlock_name: "サブ垢定義用表現",
+			menu_oneselfSubRetweetBlock_explanation: `[サブ垢での自身の引用禁止]での除外文字を指定します。
+1行ずつ評価していく為同時評価が必要な場合は「(aaa|bbb)」を使用して下さい。
+指定方法などは[禁止する表現]と同じです。`,
+			menu_emojiOnryBlock_name: "絵文字投稿禁止",
+			menu_emojiOnryBlock_explanation: `絵文字のみで構成された投稿を非表示にします。`,
+			menu_emojiOnryNameBlock_name: "絵文字ユーザー名禁止",
+			menu_emojiOnryNameBlock_explanation: `絵文字のみで構成されたユーザー名を非表示にします。`,
+			menu_verifyBlock_name: "認証アカウント禁止",
+			menu_verifyBlock_explanation: `認証済アカウントを無差別に非表示にします。`,
+			menu_verifyRtBlock_name: "認証RT禁止",
+			menu_verifyRtBlock_explanation: `認証済アカウント投稿に対する引用RTを非表示にします。`,
+			menu_verifyOnryFilter_name: "認証アカウントのみ判定",
+			menu_verifyOnryFilter_explanation: `認証済アカウントのみを検知の対象にします。
+通常アカウントや認証マークの無いアカウントはブロックされなくなります。`,
+			menu_formalityCare_name: "認証公式アカウントを保護",
+			menu_formalityCare_explanation: `公式アカウントを検知の対象から除外します。
+(公式とは青いバッジ以外を指します)`,
+			menu_visibleBlockButton_name: "クイックブロック表示",
+			menu_visibleBlockButton_explanation: `1クリックでブロックできるボタンを表示します。
+検出された投稿にしか表示されません。`,
+			menu_visibleReportButton_name: "クイック通報表示",
+			menu_visibleReportButton_explanation: `1クリックで通報できるボタンを表示します。
+検出された投稿にしか表示されません。
+(初期値はスパム報告です)`,
+			menu_maxHashtagCount_name: "ハッシュタグの上限数",
+			menu_maxHashtagCount_explanation: `1つの投稿内でのハッシュタグの使用上限数を指定します。`,
+			menu_maxSymboltagCount_name: "シンボルタグの上限数",
+			menu_maxSymboltagCount_explanation: `1つの投稿内でのシンボルタグの使用上限数を指定します。
+※シンボルタグとは「$TWTR」のような#を$に置き換えた株を表す表現`,
+			menu_maxContributtonCount_name: "ツリー返信上限数",
+			menu_maxContributtonCount_explanation: `1つの投稿ツリーでの返信上限数を指定します。
+値は許可のラインです。(例: 1で2投稿以上は非表示)
+0を指定するとこの設定は無効化されます。`,
+			menu_maxRtCount_name: "1人によるRT上限数",
+			menu_maxRtCount_explanation: `1つの投稿ツリーでの1ユーザーの引用RT返信上限数を指定します。
+値は[ツリー返信上限数]と同じ指定方法です。`,
+			menu_maxSameRtCount_name: "同一RT上限数",
+			menu_maxSameRtCount_explanation: `1つの投稿ツリーでの複数人からの同じユーザーに対する引用RT返信上限数を指定します。
+値は[ツリー返信上限数]と同じ指定方法です。`,
+			menu_msgResemblance_name: "文章類似度許可ライン",
+			menu_msgResemblance_explanation: `コピペ文章かを判別する為の基準値を指定します。`,
+			menu_maxSaveTextSize_name: "比較される最大テキストサイズ",
+			menu_maxSaveTextSize_explanation: `コピペ投稿の文章比較の最大文字数を指定します。
+値を大きくするほど誤検知率は減り、検知率も減ります。
+(投稿の文字数が最大値以下の場合、この値は使用されません)`,
+			menu_minSaveTextSize_name: "一時保存・比較される最小テキストサイズ",
+			menu_minSaveTextSize_explanation: `比較用文章の最小文字数を指定します。
+値が大きくするほど誤検知率は減り、検知率も減ります。
+([比較される最大テキストサイズ]より大きい場合、比較処理は実行されません)`,
+			menu_maxSaveLogSize_name: "一時保存される投稿の最大数",
+			menu_maxSaveLogSize_explanation: `比較用文章の保持数を指定します。
+値が小さいほど処理は軽くなりますが、検知率が減ります。`,
+			menu_language_name: "言語",
+			menu_language_explanation: `表示言語を設定します。`,
+			menu_customCss_name: "ページ適用css設定",
+			menu_customCss_explanation: `ページへ適用するcssを指定します。`,
+			menu_bodyObsTimeout_name: "ページ更新検知用処理待機時間(ms)",
+			menu_bodyObsTimeout_explanation: `ページ更新を検知する際の検知の更新間隔を指定します。
+値が大きいほど処理が軽くなりますが、非表示にする初速が落ちる可能性あります。`,
+			menu_blackMemory_name: "検知対象の記憶",
+			menu_blackMemory_explanation: `検出された対象を記憶します。
+ページを更新などしても過去に検知した対象を素早く非表示に出来ます。
+<span style="color: #f00">※この機能はbeta版です！！
+誤検知されたアカウントが非表示のままになります。
+[除外ユーザー]と併用して使用して下さい。</span>`,
+			menu_autoBlock_name: "【非推奨】自動ブロック",
+			menu_autoBlock_explanation: `検出された対象を自動でブロックします。
+<span style="color: #f00">※この機能はbeta版です！！
+誤検知でも戸惑いなくブロックされます。</span>`,
+			menu_resetSetting_name: "設定のリセット",
+			menu_resetSetting_explanation: `設定項目をリセットします。
+(ページがリロードされます)
+<span style="color: #f00">実行すると設定は復元出来ません！！！</span>`,
+			menu_resetBlackMemory_name: "検知済idのリセット",
+			menu_resetBlackMemory_explanation: `検知済idをリセットします。
+(ページがリロードされます)
+<span style="color: #f00">実行するとこれまで検知・非表示にされたユーザーが再度表示される可能性が高くなります！
+[検知対象の記憶]を使用している状況で以前より処理が重いと感じた場合、リセットすると処理が軽くなる可能性があります。</span>`,
+			menu_debug_viewSettingMenu_name: "起動時設定自動表示",
+			menu_debug_viewSettingMenu_explanation: `設定画面を自動で開く`,
+			menu_debug_viewBlacklist_name: "blacklist表示",
+			menu_debug_viewBlacklist_explanation: `現在のblacklist_idをconsoleに出力する。`,
+			menu_debug_viewMsgDB_name: "MsgDB表示",
+			menu_debug_viewMsgDB_explanation: `現在のMsgDBをconsoleに出力する。`,
+			menu_debug_reInit_name: "init再実行",
+			menu_debug_reInit_explanation: `強制的にDOM設定を再設定する。
+[ページ更新検知用処理待機時間(ms)]が仕事を放棄した際に使用。`,
 
 			//hideComment
 			detectedElsewhere: "他で検出済",
@@ -1133,25 +738,327 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			recursiveDetection: "RecursiveDetection",
 		},
 	};
+
+	/**
+	 * メニューのセレクトボックス内容
+	 * @readonly
+	 * @constant {Object.<string, string>} SETTING_LANG_SELECT
+	 */
+	const SETTING_LANG_SELECT = {
+		ja: "日本語(ja)",
+		en: "English(en)",
+	};
+
+	// --------------------------------------------------
+
+	const OBS_QUERY = "section > div > div:has(article)";
+	const RE_QUERY = `div:has(div > div > article):not(.${ELEM_NAME_DICT.CHECK_CLASS})`;
+	const NAME_SPACE_QUERY = `[data-testid="User-Name"]`;
+	const NAME_QUERY = `:not(span) > span > span`;
+	const ID_QUERY = "div > span:not(:has(span))";
+	const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
+	const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
+	const IMAGE_QUERY = `a img, [data-testid="videoComponent"] video`;
+	const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
+	let MENU_DISP_QUERY;
+	if (isMobile) {
+		MENU_DISP_QUERY = "#layers [role=menu] [role=group]";
+	} else {
+		MENU_DISP_QUERY = "[role=group] [role=menu]";
+	}
+
+	const BLOCK_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`, "[role=alertdialog] [role=group] [role=button] div"];
+
+	/*
+    3行目は場合によっては消す
+    */
+	const REPORT_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M3 2h18"])`, ["[role=radiogroup] label", 5], "[role=group]:has([role=radiogroup]) [role=button]:not(:has(svg))", ["[role=group] [role=button]:not(:has(svg))", 1], ["__wait__", 1000], ["[role=group] [role=button]:not(:has(svg))", 1]];
+
+	const VERIFY_SVG = `
+    <svg class="${ELEM_NAME_DICT.VERIFY_CLASS}" viewBox="0 0 22 22" role="img" data-testid="icon-verified">
+        <g>
+            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z">
+            </path>
+        </g>
+    </svg>
+`;
+
+	// --------------------------------------------------
+	/**
+	 * 設定リスト内容定義
+	 * @typedef {Object} SettingItem
+	 * @property {boolean|string|number} [initData] - 設定項目の初期データ
+	 * @property {boolean|string|number} [data] - 設定項目データ
+	 * @property {MENU_INPUT_TYPE} input - 設定項目の入力タイプ
+	 * @property {MENU_GROUP_TYPE} group - 所属グループ
+	 * @property {string} [value] - `MENU_INPUT_TYPE`が`btn`の場合のvalue
+	 * @property {number} [min] - `MENU_INPUT_TYPE`が`num`の場合の最小値
+	 * @property {number} [max] - `MENU_INPUT_TYPE`が`num`の場合の最小値
+	 * @property {number} [step] - `MENU_INPUT_TYPE`が`num`の場合の増分値
+	 * @property {string} [select] - `MENU_INPUT_TYPE`が`select`の場合のoptions
+	 * @property {boolean} [isError] - 【自動設定】エラーが設定項目に含まれる場合true
+	 * @property {RegExp[]} [regexp_list] - 【自動設定】regRestorationで使用
+	 * @property {RegExp} [regexp] - 【自動設定】1項目regで使用
+	 */
+
+	/**
+	 * 設定リスト
+	 * @type {Object.<string, SettingItem>}
+	 */
+	const SETTING_LIST = {
+		visibleLog: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		visibleVerifyLog: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		blackTextReg: {
+			initData: BLACK_TEXT_REG,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		whiteTextReg: {
+			initData: WHITE_TEXT_REG,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		// blackRtTextReg: {
+		// 	initData: BLACK_RT_TEXT_REG,
+		// 	input: MENU_INPUT_TYPE.textarea,
+		// 	group: MENU_GROUP_TYPE.basic,
+		// },
+		blackNameReg: {
+			initData: BLACK_NAME_REG,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		excludedUsers: {
+			initData: EXCLUDED_USERS,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		allowLang: {
+			initData: ALLOW_LANG,
+			input: MENU_INPUT_TYPE.text,
+			group: MENU_GROUP_TYPE.basic,
+			regexp: /.*/,
+		},
+		oneselfRetweetBlock: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		oneselfSubRetweetBlock: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		subDefinitionReg: {
+			initData: SUB_DEFINITION_SUB,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		emojiOnryBlock: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		emojiOnryNameBlock: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		verifyBlock: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		verifyRtBlock: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		verifyOnryFilter: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		formalityCare: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		visibleBlockButton: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		visibleReportButton: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.basic,
+		},
+		maxHashtagCount: {
+			initData: 6,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 1,
+			step: 1,
+		},
+		maxSymboltagCount: {
+			initData: 1,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 1,
+			step: 1,
+		},
+		maxContributtonCount: {
+			initData: 2,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			step: 1,
+		},
+		maxRtCount: {
+			initData: 0, //1
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			step: 1,
+		},
+		maxSameRtCount: {
+			initData: 0, //1
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			step: 1,
+		},
+		msgResemblance: {
+			initData: 0.85,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			max: 1,
+			step: 0.01,
+		},
+		maxSaveTextSize: {
+			initData: 100,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			step: 1,
+		},
+		minSaveTextSize: {
+			initData: 8,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 0,
+			step: 1,
+		},
+		maxSaveLogSize: {
+			initData: 200,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.basic,
+			min: 1,
+			step: 1,
+		},
+		language: {
+			initData: "ja",
+			input: MENU_INPUT_TYPE.select,
+			group: MENU_GROUP_TYPE.basic,
+			select: SETTING_LANG_SELECT,
+		},
+		// -------------------------
+		customCss: {
+			initData: CUSTOM_CSS,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.advanced,
+		},
+		bodyObsTimeout: {
+			initData: 3000,
+			input: MENU_INPUT_TYPE.num,
+			group: MENU_GROUP_TYPE.advanced,
+			min: 100,
+			step: 1,
+		},
+		blackMemory: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.advanced,
+		},
+		autoBlock: {
+			initData: false, // trueにしてはいけない(戒め)
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.advanced,
+		},
+		resetSetting: {
+			input: MENU_INPUT_TYPE.btn,
+			group: MENU_GROUP_TYPE.advanced,
+			value: "Reset",
+		},
+		resetBlackMemory: {
+			input: MENU_INPUT_TYPE.btn,
+			group: MENU_GROUP_TYPE.advanced,
+			value: "Reset",
+		},
+		// -------------------------
+		debug_viewSettingMenu: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.debug,
+		},
+		debug_viewBlacklist: {
+			input: MENU_INPUT_TYPE.btn,
+			group: MENU_GROUP_TYPE.debug,
+			value: "Output",
+		},
+		debug_viewMsgDB: {
+			input: MENU_INPUT_TYPE.btn,
+			group: MENU_GROUP_TYPE.debug,
+			value: "Output",
+		},
+		debug_reInit: {
+			input: MENU_INPUT_TYPE.btn,
+			group: MENU_GROUP_TYPE.debug,
+			value: "Retry",
+		},
+	};
+
+	// 元データ保存
+	for (let key in SETTING_LIST) {
+		if (SETTING_LIST[key].initData !== undefined) {
+			SETTING_LIST[key].data = SETTING_LIST[key].initData;
+		}
+	}
+
+	// --------------------------------------------------
+
+	/** @type {Object.<string, string> | null} */
 	let lang_dict = null;
 
-	// グローバル変数
+	/** @type {HTMLElement} */
 	let parentDOM = null;
+	/** @type {MutationObserver} */
 	let parent_observer = null;
+	/** @type {string} */
 	let oldUrl = location.href;
+	/** @type {string} */
 	let parent_id = null;
+	/** @type {HTMLElement} */
 	let exMenuDOM = null;
 
-	const blacklist_reg = [];
-	const whitelist_reg = [];
-	//const blackRtList_reg = [];
-	const blackNameList_reg = [];
-	const subDefinitionList_reg = [];
-	let allowLang_reg = /.*/;
-	const excludedUsersSet = new Set();
+	/** @type {MessageData[]} */
 	const msgDB = [];
+	/** @type {Set<string>} */
 	const msgDB_id = new Set();
+	/** @type {Set<string>} */
 	const blacklist_id = new Set();
+	/** @type {Set<string>} */
+	const excludedUsersSet = new Set();
 
 	let levenshteinDistanceUseFlag = true;
 	let stopFlag = false;
@@ -1162,6 +1069,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	// もっと見るを軽量で観測する為に使用
 	let existMoreTweet = false;
 
+	// --------------------------------------------------
 	const spaceRegList = [
 		/[ 　\t]/gu,
 		/[\u00A0\u00AD\u034F\u061C]/gu,
@@ -1172,1193 +1080,291 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		/[\uFEFF\uFFA0]/gu,
 		/[\u{1D159}\u{1D173}-\u{1D17A}]/gu,
 	];
-	const othToHiraRegList = [
+	const normalizeRegList = [
 		[/[ア-ヺ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60)],
 		[/[”“″‶〝‟]/gu, '"'],
 		[/[’‘′´‛‵＇]/gu, "'"],
 	];
+	const reRegExpReg = /\\x([0-9a-fA-F]{2})|\\u([0-9a-fA-F]{4})|\\u\{([0-9a-fA-F]{1,6})\}/g;
 	const cleanNameReg = /\(\)\[\]\s/gu;
 	const CrLfReg = /[\r\n]/gu;
 	const spaceReg = / /g;
 
-	// 元データ保存
-	for (let key in SETTING_LIST) {
-		if (SETTING_LIST[key].data !== undefined) {
-			SETTING_LIST[key]._data = SETTING_LIST[key].data;
+	const tweetUrlImgReg = /^https?:\/\/pbs\.twimg\.com\/media\//;
+	const tweetUrlVideoReg = /^https?:\/\/video\.twimg\.com\/tweet_video\//;
+
+	// ==========================================================================================
+	// メッセージデータ保存 クラス
+	// ==========================================================================================
+
+	/**
+	 * メッセージデータ
+	 */
+	class MessageData {
+		/**
+		 * メッセージデータ保存
+		 * @param {string} url
+		 * @param {HTMLElement} card
+		 */
+		constructor(url, card) {
+			this.base_url = url;
+			/** @type {HTMLElement} */
+			this.card = card;
+			this.verify = false;
+			this.formality = false;
+			this.attach_img = false;
+			this.attach_file_list = [];
+			/** @type {MessageData | null} */
+			this.reTweet = null;
+			/** @type {MessageData | null} */
+			this.parentTweet = null;
+			/** @type {HTMLElement | null} */
+			this.menuDOM = null;
+
+			this._nsOneLoadFlag = false;
+			this._notTextDiv = false;
 		}
-	}
 
-	log("起動中...");
-
-	init();
-
-	if (GM?.registerMenuCommand && !isMobile) {
-		const menu_command_id_1 = GM.registerMenuCommand(
-			"設定を開く",
-			function (event) {
-				menuOpen();
-			},
-			{
-				accessKey: "s",
-				autoClose: true,
+		/**
+		 * カードデータ取得
+		 * @returns {Promise<undefined> | false}
+		 */
+		cardDataGet() {
+			const article = this._getArticle();
+			if (!article) {
+				return false;
 			}
-		);
-	} else {
-		let btn = document.createElement("input");
-		btn.id = EX_MENU_OPEN_BUTTON;
-		btn.addEventListener("click", () => {
-			menuOpen();
-		});
-		btn.type = "button";
-		btn.value = "disp:menu";
-		waitForKeyElements(`body`, (e) => {
-			e.appendChild(btn);
-		});
-	}
 
-	async function init() {
-		// 親id取得
-		setParentId();
-
-		// 設定呼び出し
-		log("設定読み込み...開始");
-		try {
-			let saveData = await GM.getValue(SETTING_SAVE_KEY, null);
-			if (saveData != null) {
-				let jsonData = null;
-				try {
-					jsonData = JSON.parse(saveData);
-				} catch (e) {
-					console.error(e);
+			let nameSpace_div = article.querySelectorAll(NAME_SPACE_QUERY);
+			nameSpace_div.forEach((div) => {
+				// 2回目以降はリツイート
+				if (this._nsOneLoadFlag) {
+					this._addReTweet();
 				}
-				if (jsonData != null) {
-					for (let key in SETTING_LIST) {
-						if (key in jsonData) {
-							SETTING_LIST[key].data = jsonData[key];
+
+				// ユーザー名(id)取得
+				let name_span = div.querySelector(NAME_QUERY);
+				if (this._nsOneLoadFlag) {
+					this.reTweet._setName(name_span?.innerText);
+				} else {
+					this._setName(name_span?.innerText);
+				}
+
+				// id取得(ついでに認証マーク判定)
+				let id_span = div.querySelectorAll(ID_QUERY);
+				id_span.forEach((span) => {
+					let fc = span.querySelector(VERIFY_FORMALITY_QUERY);
+					if (fc != null) {
+						if (this._nsOneLoadFlag) {
+							this.reTweet.formality = true;
+						} else {
+							this.formality = true;
 						}
 					}
-				}
-			}
-		} catch (e) {
-			console.error(e);
-		}
-		lang_dict = LANGUAGE_DICT[SETTING_LIST?.language?.data ?? "ja"];
-		log("設定読み込み...完了");
-
-		//検知id再取得
-		if (SETTING_LIST.blackMemory.data) {
-			log("検知済id読み込み...開始");
-			try {
-				let bd = await GM.getValue(BLACK_MEMORY_KEY, null);
-				if (bd != null) {
-					let jsonData = null;
-					try {
-						jsonData = JSON.parse(bd);
-					} catch (e) {
-						console.error(e);
-					}
-					if (jsonData != null) {
-						for (let i = 0, li = jsonData.length; i < li; i++) {
-							let id = jsonData[i];
-							if (id.length > 1 && id.startsWith("@")) {
-								blacklist_id.add(id);
+					fc = span.querySelector(VERIFY_QUERY);
+					if (fc != null) {
+						if (this._nsOneLoadFlag) {
+							this.reTweet.verify = true;
+						} else {
+							this.verify = true;
+						}
+					} else {
+						let tmp = span.innerText.trim();
+						if (tmp.startsWith("@")) {
+							if (this._nsOneLoadFlag) {
+								this.reTweet.id = tmp;
 							} else {
-								log("破損id:" + id);
+								this.id = tmp;
 							}
 						}
 					}
-				}
-			} catch (e) {
-				console.error(e);
-			}
-			log("検知済id読み込み...完了");
-		}
+				});
 
-		// フィルター正規表現設定
-		{
-			// ブラック表現リスト
-			regRestoration("blackTextReg", blacklist_reg);
-			// ホワイト表現リスト
-			regRestoration("whiteTextReg", whitelist_reg);
-			// ブラックRT表現リスト
-			//regRestoration("blackRtTextReg",blackRtList_reg);
-			// ブラック名前リスト
-			regRestoration("blackNameReg", blackNameList_reg);
-			// サブ垢定義用表現リスト
-			regRestoration("subDefinitionReg", subDefinitionList_reg);
-
-			// 除外idリスト
-			let spText = SETTING_LIST.excludedUsers.data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-
-			spText.forEach((row) => {
-				if (row.trim().length && !row.startsWith("!#")) {
-					if (!row.startsWith("@")) {
-						row = "@" + row;
-					}
-					excludedUsersSet.add(row);
-					blacklist_id.delete(row);
-				}
+				this._nsOneLoadFlag = true;
 			});
 
-			// 投稿の言語を制限
-			try {
-				let text = SETTING_LIST.allowLang.data.trim();
-				if (text.length) {
-					allowLang_reg = new RegExp(text, "i");
-				}
-			} catch (e) {
-				console.error(e);
-				SETTING_LIST.allowLang.isError = true;
+			// 投稿時間取得
+			let time_elem = article.querySelector("time");
+			if (!time_elem) {
+				return false;
 			}
-		}
+			if (!this._setDate(time_elem.dateTime)) return false;
 
-		// 画面移管時対応
-		const body_observer = new MutationObserver(bodyChangeEvent);
-		body_observer.observe(document.body, {
-			subtree: true,
-			childList: true,
-		});
+			const pro = [
+				// 画像添付確認
+				this._imgCheck(article),
+				// メニュー取得(...のこと)
+				this._getMenu(article),
+			];
 
-		// カスタムcss設定
-		try {
-			GM.addStyle(BASE_CSS);
-			GM.addStyle(SETTING_LIST.customCss.data);
-		} catch (e) {
-			console.error(e);
-			SETTING_LIST.customCss.isError = true;
-		}
+			this._text_divs = article.querySelectorAll("div[lang]");
+			let text_div = this._text_divs?.[0];
 
-		// 文章類似比較を実行するか
-		if (!SETTING_LIST.maxSaveTextSize.data || SETTING_LIST.maxSaveTextSize.data < SETTING_LIST.minSaveTextSize.data) {
-			levenshteinDistanceUseFlag = false;
-		}
-
-		card_init();
-		// 自動で設定画面を開く
-		if (SETTING_LIST.debug_viewSettingMenu.data) {
-			menuOpen();
-		}
-	}
-
-	function menu_init() {
-		let w_exMenuDOM = document.createElement("div");
-		let advanceDOM = document.createElement("details");
-		let debugDOM = document.createElement("details");
-		w_exMenuDOM.innerHTML = lang_dict.menu_warn;
-		advanceDOM.innerHTML = lang_dict.menu_advanced;
-		debugDOM.innerHTML = lang_dict.menu_debug;
-		for (let key in SETTING_LIST) {
-			let item = SETTING_LIST[key];
-			// 入力欄作成
-			let inputType = item?.input ?? "";
-			let input_elem = document.createElement("input");
-			input_elem.type = inputType;
-			let add_elem = null;
-			switch (inputType) {
-				case "text":
-					input_elem.value = item.data;
-					break;
-				case "number":
-					input_elem.value = item.data;
-					if (item?.min != null) {
-						input_elem.min = item.min;
-					}
-					if (item?.max != null) {
-						input_elem.max = item.max;
-					}
-					if (item?.step != null) {
-						input_elem.step = item.step;
-					}
-					break;
-				case "checkbox":
-					input_elem.checked = item?.data ?? false;
-					add_elem = document.createElement("span");
-					break;
-				case "radiobutton":
-					// 使ってない
-					break;
-				case "button":
-					input_elem.value = item.value;
-					break;
-				case "textarea":
-					input_elem = document.createElement("textarea");
-					input_elem.value = item.data;
-					break;
-				case "select":
-					input_elem = document.createElement("select");
-					if (item?.select) {
-						let tmp = "";
-						for (let key in item.select) {
-							tmp += `<option value="${key}" ${SETTING_LIST.language.data == key ? "selected" : ""}>${item.select[key]}</option>`;
-						}
-						input_elem.innerHTML = tmp;
-					}
-					break;
-				default:
-					console.warn("対応していない形式", item);
-					continue;
-			}
-			input_elem.id = EX_MENU_ITEM_BASE_ID + key;
-
-			// 項目を囲うdiv
-			let div = document.createElement("div");
-			// 名前
-			if (item?.name) {
-				let name_elem = document.createElement("p");
-				name_elem.innerText = item.name?.[SETTING_LIST.language.data] ?? item.name?.["ja"] ?? "?";
-				name_elem.classList.add(EX_MENU_ITEM_BASE_ID + "_name");
-				div.appendChild(name_elem);
-			}
-			// 説明
-			if (item?.explanation) {
-				let ex_elem = document.createElement("p");
-				let tmp = item.explanation?.[SETTING_LIST.language.data] ?? item.explanation?.["ja"] ?? "?";
-				ex_elem.innerHTML = tmp.replace(/\n/g, "<br/>");
-				div.appendChild(ex_elem);
-			}
-
-			div.appendChild(input_elem);
-			if (add_elem) {
-				div.appendChild(add_elem);
-			}
-
-			if (item?.isError) {
-				let errDOM = document.createElement("p");
-				errDOM.classList.add(EX_MENU_ITEM_ERROR_CLASS);
-				errDOM.innerText = lang_dict.menu_error;
-				div.appendChild(errDOM);
-			}
-
-			if (item.advanced) {
-				advanceDOM.appendChild(div);
-			} else if (item.debug) {
-				debugDOM.appendChild(div);
-			} else {
-				w_exMenuDOM.appendChild(div);
-			}
-		}
-		w_exMenuDOM.appendChild(advanceDOM);
-		w_exMenuDOM.appendChild(debugDOM);
-		// 画面右下のボタン系
-		{
-			let div = document.createElement("div");
-			div.id = EX_MENU_ITEM_BASE_ID + "__btns";
-			let btn_elem = document.createElement("input");
-			btn_elem.type = "button";
-			btn_elem.value = lang_dict.save;
-			btn_elem.id = EX_MENU_ITEM_BASE_ID + "__save";
-			div.appendChild(btn_elem);
-			btn_elem = document.createElement("input");
-			btn_elem.type = "button";
-			btn_elem.value = lang_dict.close;
-			btn_elem.id = EX_MENU_ITEM_BASE_ID + "__close";
-			div.appendChild(btn_elem);
-			w_exMenuDOM.appendChild(div);
-		}
-		exMenuDOM = document.createElement("div");
-		exMenuDOM.id = EX_MENU_ID;
-		exMenuDOM.lang = SETTING_LIST.language.data;
-		if (isMobile) {
-			exMenuDOM.classList.add(MOBILE_FLAG_CLASS);
-		} else {
-			exMenuDOM.classList.add(PC_FLAG_CLASS);
-		}
-		exMenuDOM.appendChild(w_exMenuDOM);
-	}
-
-	function card_init() {
-		log("初期化中...");
-
-		let tmp = document.querySelector(OBS_QUERY);
-		if (tmp && tmp.classList.contains(PARENT_CLASS)) {
-			console.log("MutationObserverはすでに設定されています！");
-			return;
-		}
-		// もっと見るフラグ初期化
-		existMoreTweet = false;
-
-		// 表示待機
-		waitForKeyElements(OBS_QUERY, function () {
-			// (投稿リストの)親を取得
-			parentDOM = document.querySelector(OBS_QUERY);
-			if (parentDOM == null) {
-				log(`(${OBS_QUERY})が見つけれませんでした`);
-				return;
-			}
-			parentDOM.classList.add(PARENT_CLASS);
-
-			// DOM変更検知(イベント)
-			parent_observer = new MutationObserver((records) => {
-				records.forEach((record) => {
-					let addNodes = record.addedNodes;
-					if (addNodes.length) {
-						addNodes.forEach((addNode) => {
-							cardCheck(addNode);
-						});
+			let fullStr = "";
+			let str = "";
+			let emojiLst = [];
+			if (text_div) {
+				let tmp;
+				text_div.childNodes.forEach((elem) => {
+					switch (elem.tagName) {
+						case "SPAN":
+							tmp = elem.innerText;
+							str += tmp;
+							fullStr += tmp;
+							break;
+						case "IMG":
+							tmp = elem.alt;
+							emojiLst.push(tmp);
+							fullStr += tmp;
+							break;
 					}
 				});
-			});
-			parent_observer.observe(parentDOM, {
-				childList: true,
-				//subtree: true,
-			});
-
-			// 先頭部分が取得出来ていないので再実行
-			parentDOM.querySelectorAll(RE_QUERY).forEach((elem) => {
-				cardCheck(elem);
-			});
-		});
-	}
-
-	// メッセージの親を取得
-	function setParentId() {
-		let url = oldUrl.replace(/https?:\/\/.*?\.com/, "");
-		if (url.startsWith("/")) {
-			let urls = url.replace(/\?/, "/").split("/");
-			let uid = urls[1] ?? urls[0];
-			if (["home", "search"].includes(uid)) {
-				stopFlag = true;
-				return;
-			}
-			const isStatusType = urls[2] ?? "";
-			console.log(`isStatusType: ${isStatusType}`);
-			if (!["status"].includes(isStatusType)) {
-				stopFlag = true;
-				return;
-			}
-			if (uid) {
-				uid = "@" + uid;
-				log(`親投稿者: ${uid}`);
-				parent_id = uid;
-				stopFlag = false;
-				// 気分で消しとく
-				blacklist_id.delete(uid);
-			}
-		}
-	}
-
-	// 画面移管対応
-	function bodyChangeEvent() {
-		// 更新過多で重くなるので同時実行禁止
-		if (body_isWait) {
-			body_isReservation = true;
-			return;
-		}
-		body_isWait = true;
-		// 反応しない場合用に一瞬待機
-		setTimeout(function () {
-			// URL変更時のみ
-			if (oldUrl !== location.href) {
-				oldUrl = location.href;
-				setParentId();
-				if (!document.getElementsByClassName(PARENT_CLASS)?.[0]) {
-					if (parent_observer) {
-						parent_observer.disconnect();
-						parent_observer = null;
-					}
-					card_init();
-				}
-			} else if (!document.getElementsByClassName(PARENT_CLASS)?.[0]) {
-				// class 検知
-				if (parent_observer) {
-					parent_observer.disconnect();
-					parent_observer = null;
-				}
-				card_init();
-			}
-			body_isWait = false;
-			// 一応再実行
-			if (body_isReservation) {
-				body_isReservation = false;
-				bodyChangeEvent();
-			}
-		}, SETTING_LIST.bodyObsTimeout.data);
-	}
-
-	// 処理対象判定&処理実行(疑似的に非同期処理に)
-	function cardCheck(card_elem) {
-		// 処理は1度のみ
-		if (card_elem.classList.contains(CHECK_CLASS)) {
-			return;
-		}
-		card_elem.classList.add(CHECK_CLASS);
-
-		// もっと見るが判定されてしまう問題をゴリ押しで対処
-		if (existMoreTweet) {
-			let tmp_elem = card_elem;
-			for (let i = 0; i < 5; i++) {
-				tmp_elem = tmp_elem.previousElementSibling;
-				if (!tmp_elem) {
-					break;
-				}
-				if (tmp_elem.classList.contains(MORE_TWEET_CLASS)) {
-					card_elem.classList.add(MORE_TWEET_CLASS);
-					return;
-				}
-			}
-		} else {
-			if (card_elem.querySelector("h2")) {
-				existMoreTweet = true;
-				card_elem.classList.add(MORE_TWEET_CLASS);
-			}
-		}
-
-		let messageData = {
-			base_url: oldUrl,
-			card: card_elem,
-			verify: false,
-			formality: false,
-			attach_img: false,
-			reTweet: null,
-			menuDOM: null,
-			_nsOneLoadFlag: false,
-		};
-		let pro = [];
-
-		// 処理対象か判定
-		let article = card_elem?.firstChild?.firstChild?.firstChild;
-		if (article?.tagName != "ARTICLE") {
-			return;
-		}
-
-		// ユーザー名などの空間取得
-		let nameSpace_div = article.querySelectorAll(NAME_SPACE_QUERY);
-		nameSpace_div.forEach((div) => {
-			// 2回目以降はリツイート
-			if (messageData._nsOneLoadFlag) {
-				messageData.reTweet = {
-					verify: false,
-				};
-			}
-
-			// ユーザー名(id)取得
-			let name_span = div.querySelector(NAME_QUERY);
-			if (messageData._nsOneLoadFlag) {
-				messageData.reTweet.name = name_span?.innerText;
 			} else {
-				messageData.name = name_span?.innerText;
+				this._notTextDiv = true;
 			}
 
-			// id取得(ついでに認証マーク判定)
-			let id_span = div.querySelectorAll(ID_QUERY);
-			id_span.forEach((span) => {
-				let fc = span.querySelector(VERIFY_FORMALITY_QUERY);
-				if (fc != null) {
-					if (messageData._nsOneLoadFlag) {
-						messageData.reTweet.formality = true;
-					} else {
-						messageData.formality = true;
-					}
-				}
-				fc = span.querySelector(VERIFY_QUERY);
-				if (fc != null) {
-					if (messageData._nsOneLoadFlag) {
-						messageData.reTweet.verify = true;
-					} else {
-						messageData.verify = true;
-					}
-				} else {
-					let tmp = span.innerText.trim();
-					if (tmp.startsWith("@")) {
-						if (messageData._nsOneLoadFlag) {
-							messageData.reTweet.id = tmp;
-						} else {
-							messageData.id = tmp;
-						}
-					}
-				}
-			});
+			this.fullMessage = fullStr;
+			this._setMessage(str);
+			this.emoji = emojiLst;
 
-			messageData._nsOneLoadFlag = true;
-		});
-
-		// 名前の正規化
-		if (messageData.name) {
-			messageData.cleanName = othToHira(messageData.name).replace(cleanNameReg, "");
-		}
-		if (messageData.reTweet?.name) {
-			messageData.reTweet.cleanName = othToHira(messageData.reTweet.name.replace(cleanNameReg, ""));
+			return Promise.all(pro);
 		}
 
-		// 投稿時刻
-		let time_elem = article.querySelector("time");
-		if (!time_elem) {
-			return;
-		}
-		try {
-			messageData.dateTime = new Date(time_elem.dateTime);
-		} catch (e) {
-			console.error(e);
-			return;
-		}
-		if (messageData.dateTime.toString() == "Invalid Date") {
-			log("日付変換失敗");
-			return;
+		/**
+		 * 処理対象か判定/取得
+		 * @returns {HTMLElement}
+		 */
+		_getArticle() {
+			let article = this.card.firstChild?.firstChild?.firstChild;
+			if (article?.tagName != "ARTICLE") {
+				return null;
+			}
+			return article;
 		}
 
-		// メディアを添付しているか
-		pro.push(
-			new Promise((resolve) => {
+		/**
+		 * ReTweetである場合
+		 * @returns {MessageData}
+		 */
+		_addReTweet() {
+			const md = new MessageData(this.base_url, null);
+			this.reTweet = md;
+			md.parentTweet = this;
+			return md;
+		}
+
+		/**
+		 * 名前設定
+		 * @param {string} name
+		 * @returns {undefined}
+		 */
+		_setName(name = "") {
+			this.name = name;
+			this.cleanName = normalize(name).replace(CrLfReg, " ");
+		}
+
+		/**
+		 * メッセージ設定
+		 * @param {string} message
+		 * @returns {undefined}
+		 */
+		_setMessage(message = "") {
+			this.message = message;
+			this.cleanMessage = normalize(message);
+			this.message_len = this.cleanMessage.length;
+		}
+
+		/**
+		 * 日時データ設定
+		 * @param {string} date
+		 * @returns {boolean}
+		 */
+		_setDate(date) {
+			try {
+				this.dateTime = new Date(date);
+			} catch (e) {
+				console.error(e);
+				return false;
+			}
+			if (this.dateTime.toString() == "Invalid Date") {
+				log("日付変換失敗");
+				return false;
+			}
+			this.time_value = this.dateTime.getTime();
+			return true;
+		}
+
+		/**
+		 * 画像添付確認
+		 * @param {HTMLElement} article
+		 * @returns {Promise<undefined>}
+		 */
+		_imgCheck(article) {
+			const this_ = this;
+			return new Promise((resolve) => {
 				setTimeout(() => {
 					let attach_img = article.querySelectorAll(IMAGE_QUERY);
 					//console.log(attach_img)
 					if (attach_img) {
 						for (let img of attach_img) {
-							if (/^https?:\/\/pbs\.twimg\.com\/media\//.test(img.src)) {
+							const src = img.src;
+							if (tweetUrlImgReg.test(src)) {
 								// 画像
-								messageData.attach_img = true;
-								break;
-							} else if (/^https?:\/\/video\.twimg\.com\/tweet_video\//.test(img.src)) {
-								// 動画
-								messageData.attach_img = true;
-								break;
+								this_.attach_img = true;
+								this_.attach_file_list.push(src);
+							} else if (tweetUrlVideoReg.test(src)) {
+								// 動画(Gif含む)
+								this_.attach_img = true;
+								this_.attach_file_list.push(src);
 							}
 						}
 					}
 					resolve();
 				}, 1000);
-			})
-		);
-
-		// メッセージ取得
-		messageData._text_divs = article.querySelectorAll("div[lang]");
-		let text_div = messageData._text_divs?.[0];
-
-		let fullStr = "";
-		let str = "";
-		let emojiLst = [];
-		if (text_div) {
-			let tmp;
-			text_div.childNodes.forEach((elem) => {
-				switch (elem.tagName) {
-					case "SPAN":
-						tmp = elem.innerText;
-						str += tmp;
-						fullStr += tmp;
-						break;
-					case "IMG":
-						tmp = elem.alt;
-						emojiLst.push(tmp);
-						fullStr += tmp;
-						break;
-					default:
-						break;
-				}
 			});
-		} else {
-			messageData._notTextDiv = true;
 		}
 
-		messageData.full = fullStr;
-		messageData.str = str;
-		messageData.emoji = emojiLst;
-		messageData.cleanStr = othToHira(str).replace(CrLfReg, " ");
-		messageData.str_len = messageData.cleanStr.length;
-
-		// メニュー取得(...のこと)
-		pro.push(
-			new Promise((resolve) => {
+		/**
+		 * メニュー取得
+		 * @param {HTMLElement} article
+		 * @returns {Promise<undefined>}
+		 */
+		_getMenu(article) {
+			const this_ = this;
+			return new Promise((resolve) => {
 				setTimeout(() => {
 					let menuDOMs = article.querySelectorAll(MENU_BUTTON_QUERY);
 					if (menuDOMs.length >= 3) {
-						messageData.menuDOM = menuDOMs[0];
+						this_.menuDOM = menuDOMs[0];
 					}
 					resolve();
 				}, 1000);
-			})
-		);
-
-		Promise.all(pro)
-			.then(() => {
-				let ret = commentFilter(messageData);
-				let id;
-				switch (ret[0]) {
-					case -2:
-						// 処理済
-						return;
-					case -1:
-						// 取得,判定済投稿
-						return;
-					case 0:
-						id = messageData.id;
-						if (msgDB_id.has(id)) {
-							let bu = messageData.base_url;
-							// 連投検出
-							if (SETTING_LIST.maxContributtonCount.data > 0) {
-								let cou = 0;
-								for (let md of msgDB) {
-									if (md.id == id && md.base_url == bu) {
-										cou++;
-									}
-								}
-								if (SETTING_LIST.maxContributtonCount.data <= cou) {
-									hideComment(messageData, `${lang_dict.contributtonCount}`);
-									return;
-								}
-							}
-							// RT連投検出
-							if (SETTING_LIST.maxRtCount.data > 0 && messageData.reTweet) {
-								let cou = 0;
-								let rtl = new Set(messageData.reTweet.id);
-								for (let md of msgDB) {
-									if (md.id == id && md.base_url == bu && md.reTweet) {
-										cou++;
-										rtl.add(md.reTweet.id);
-									}
-								}
-								if (SETTING_LIST.maxRtCount.data <= cou) {
-									hideComment(messageData, `${lang_dict.rtContributtonCount}`);
-									// 引用先も一応抹消
-									for (let rt of rtl) {
-										blacklist_id.add(rt);
-									}
-									return;
-								}
-							}
-							// 同一ユーザーRT検出
-							if (SETTING_LIST.maxSameRtCount.data > 0 && messageData.reTweet) {
-								let rt = messageData.reTweet.id;
-								let cou = 0;
-								let us = new Set(id);
-								let usd = [messageData];
-								for (let md of msgDB) {
-									if (md.base_url == bu && md.reTweet?.id == rt) {
-										cou++;
-										if (!us.has(md.id)) {
-											us.add(md.id);
-											usd.push(md);
-										}
-									}
-								}
-								if (SETTING_LIST.maxRtCount.data <= cou) {
-									for (let td of usd) {
-										hideComment(td, `${lang_dict.rtSharingSeries}`);
-									}
-									// 引用先も一応抹消
-									blacklist_id.add(rt);
-									return;
-								}
-							}
-						}
-						// 問題なし
-						addDB(messageData);
-						return;
-					case 1:
-						// コメントフィルターに反応
-						hideComment(messageData, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
-						return;
-					case 2:
-						// 絵文字のみ(スパム)
-						hideComment(messageData, `<span title="comment">${lang_dict.emojiOnly}</span>`);
-						return;
-					case 3:
-						// コピペ
-						hideComment(messageData, `<span title="${lang_dict.similarity}:${((ret[1] * 10000) | 0) / 100}%">${lang_dict.textDuplication}</span>`);
-						return;
-					case 4:
-						// 異常なハッシュタグの使用
-						hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
-						return;
-					case 5:
-						// 自分自身の引用
-						hideComment(messageData, lang_dict.selfCitation);
-						return;
-					case 6:
-						// 名前フィルターに反応
-						hideComment(messageData, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
-						return;
-					case 7:
-						// 名前が絵文字のみ
-						hideComment(messageData, `<span title="name">${lang_dict.emojiOnly}</span>`);
-						return;
-					case 8:
-						// 認証済アカウントをRTするな
-						hideComment(messageData, lang_dict.verifyRtBlock);
-						return;
-					case 9:
-						// 異常なシンボルタグの使用
-						hideComment(messageData, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
-						return;
-					case 10:
-						// 他で検出済
-						hideComment(messageData, lang_dict.detectedElsewhere);
-						return;
-					case 11:
-						// 認証済アカウント
-						hideComment(messageData, lang_dict.authenticatedAccount);
-						return;
-					case 12:
-						// 投稿言語の制限
-						hideComment(messageData, `<span title="${ret[1]}">${lang_dict.unauthorizedLanguage}</span>`);
-						return;
-					case 13:
-						// サブ垢で己をRTすんな
-						hideComment(messageData, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.selfCitationSub}</span>`);
-						return;
-				}
-			})
-			.catch(console.warn);
-	}
-
-	function commentFilter(mesData) {
-		//log(messageData);
-		// 投稿主保護
-		if (mesData.id == parent_id) {
-			addDB(mesData);
-			return [-2];
-		}
-		// 除外ユーザー保護
-		if (excludedUsersSet.has(mesData.id)) {
-			addDB(mesData);
-			return [-2];
-		}
-		// 認証公式アカウント保護
-		if (SETTING_LIST.formalityCare.data && mesData.formality) {
-			addDB(mesData);
-			return [-2];
-		}
-		// blacklist_id比較
-		if (blacklist_id.has(mesData.id)) {
-			return [10];
-		}
-		// 認証済アカウント強制ブロック
-		if (SETTING_LIST.verifyBlock.data && mesData.verify) {
-			return [11];
-		}
-		// 投稿言語の制限
-		for (let div of mesData._text_divs) {
-			if (!allowLang_reg.test(div.lang)) {
-				return [12, div.lang];
-			}
-		}
-
-		// 無言で無言の引用リツイートしている場合
-		if (mesData.reTweet && mesData._notTextDiv) {
-			// 自分自身の場合
-			if (SETTING_LIST.oneselfRetweetBlock.data && mesData.reTweet.id == mesData.id) {
-				return [5];
-			}
-			// 認証済アカウントをRTするな
-			if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
-				return [8];
-			}
-			//サブ垢判定
-			if (SETTING_LIST.oneselfSubRetweetBlock) {
-				for (let reg of subDefinitionList_reg) {
-					if (mesData.cleanName.replace(reg[0], "") == mesData.reTweet.cleanName.replace(reg[0], "")) {
-						return [13, reg[1]];
-					}
-				}
-			}
-		}
-		let message = mesData.cleanStr;
-		if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !mesData.attach_img) {
-			return [2];
-		}
-		if (SETTING_LIST.emojiOnryNameBlock.data && !mesData.name?.replace(spaceReg, "")?.length) {
-			mesData.name = mesData.id;
-			return [7];
-		}
-
-		// 引用リツイートしている場合
-		if (mesData.reTweet) {
-			// 自分自身の場合
-			if (SETTING_LIST.oneselfRetweetBlock.data && mesData.reTweet.id == mesData.id) {
-				return [5];
-			}
-			// 認証済アカウントをRTするな
-			if (SETTING_LIST.verifyRtBlock.data && mesData.reTweet?.verify) {
-				return [8];
-			}
-			//サブ垢判定
-			if (SETTING_LIST.oneselfSubRetweetBlock) {
-				for (let reg of subDefinitionList_reg) {
-					if (mesData.cleanName.replace(reg[0], "") == mesData.reTweet.cleanName.replace(reg[0], "")) {
-						return [13, reg[1]];
-					}
-				}
-			}
-		}
-
-		// コメントフィルターによる検出
-		for (let reg of blacklist_reg) {
-			if (reg[0].test(message)) {
-				return [1, reg[1]];
-			}
-		}
-
-		// 名前フィルターによる検出
-		let username = othToHira(mesData.name).replace(CrLfReg, " ");
-		for (let reg of blackNameList_reg) {
-			if (reg[0].test(username)) {
-				return [6, reg[1]];
-			}
-		}
-
-		// 異常なハッシュタグの使用回数
-		let hashtagCou = message.match(/#[^ ]+/g)?.length ?? 0;
-		if (hashtagCou >= SETTING_LIST.maxHashtagCount.data) {
-			return [4, hashtagCou];
-		}
-
-		// 異常なシンボルタグの使用回数
-		let symboltagCou = message.match(/\$[^ ]+/g)?.length ?? 0;
-		if (symboltagCou >= SETTING_LIST.maxSymboltagCount.data) {
-			return [9, symboltagCou];
-		}
-
-		// 短い文字列は比較しない(誤爆対処)
-		let min_sts = SETTING_LIST.minSaveTextSize.data;
-		if (levenshteinDistanceUseFlag && mesData.str_len >= min_sts) {
-			// コピぺチェック
-			let max_sts = SETTING_LIST.maxSaveTextSize.data;
-			let al = mesData.str_len;
-			let am = mesData.dateTime.getTime();
-			for (let md of msgDB) {
-				let a = message;
-				let b = md.cleanStr;
-				let bl = md.str_len;
-				let m = Math.min(al, bl, max_sts);
-				if (m < min_sts) {
-					continue;
-				}
-				if (m != al) {
-					a = a.substring(0, m);
-				}
-				if (m != bl) {
-					b = b.substring(0, m);
-				}
-
-				// 一度取得したツイートだった場合
-				let bm = md.dateTime.getTime();
-				if (am == bm && mesData.id == md.id && mesData.cleanStr == md.cleanStr) {
-					return [-1];
-				}
-
-				let ld = levenshteinDistance(a, b);
-				if (ld >= SETTING_LIST.msgResemblance.data) {
-					if (am > bm) {
-						return [3, ld];
-					} else {
-						blacklist_id.add(md.id);
-						break;
-					}
-				}
-			}
-		} else {
-			// 比較が行われない場合の代替処理
-			let am = mesData.dateTime.getTime();
-			for (let md of msgDB) {
-				let bm = md.dateTime.getTime();
-				if (am == bm && mesData.id == md.id && mesData.cleanStr == md.cleanStr) {
-					return [-1];
-				}
-			}
-		}
-		return [0];
-	}
-
-	function addDB(mesData) {
-		msgDB_id.add(mesData.id);
-		/*// 短いと誤爆するため
-        if (mesData.str_len < SETTING_LIST.minSaveTextSize.data) {
-            return;
-        }*/
-		if (msgDB.length > SETTING_LIST.maxSaveLogSize.data) {
-			msgDB.shift();
-		}
-		msgDB.push(mesData);
-		log(msgDB.length);
-	}
-
-	function hideComment(mesData, reason, ch = true) {
-		// TLTW以外では大人しく
-		if (stopFlag) {
-			addDB(mesData);
-			return;
-		}
-		// 認証済アカウントのみ判定
-		if (SETTING_LIST.verifyOnryFilter.data && !mesData.verify) {
-			addDB(mesData);
-			return;
-		}
-		blacklist_id.add(mesData.id);
-
-		// フィルターによる検出
-		for (let reg of whitelist_reg) {
-			if (reg[0].test(mesData.cleanStr)) {
-				return;
-			}
-		}
-
-		mesData.card.classList.add(HIDE_CLASS);
-
-		if (SETTING_LIST.visibleLog.data) {
-			let div = document.createElement("div");
-			div.classList.add(LOG_CLASS);
-
-			let bstw = lang_dict.viewOriginalTweet;
-
-			let isVerify = "";
-			if (SETTING_LIST.visibleVerifyLog.data && mesData.verify) {
-				isVerify = VERIFY_SVG;
-			}
-
-			div.innerHTML = /* html */ `
-<span>[${reason}] <a href="/${mesData.id}" title="${mesData.id}">${mesData.name}</a> ${isVerify}</span>
-
-<label><input type="checkbox">${bstw}</label>
-`;
-			if (SETTING_LIST.visibleBlockButton.data) {
-				let blockBtn = document.createElement("input");
-				blockBtn.type = "button";
-				blockBtn.value = "Block";
-				div.firstElementChild.appendChild(blockBtn);
-				blockBtn.addEventListener("click", function () {
-					menuClicker(BLOCK_QUERY_LIST, mesData);
-				});
-			}
-			if (SETTING_LIST.visibleReportButton.data) {
-				let reportBtn = document.createElement("input");
-				reportBtn.type = "button";
-				reportBtn.value = "Report";
-				div.firstElementChild.appendChild(reportBtn);
-				reportBtn.addEventListener("click", function () {
-					menuClicker(REPORT_QUERY_LIST, mesData);
-				});
-			}
-			mesData.card.prepend(div);
-		}
-		// 無駄な比較をしないように
-		if (ch) {
-			dbCommentBlock(mesData.id);
-
-			if (SETTING_LIST.autoBlock.data) {
-				console.log(`自動ブロック: ${mesData.name}(${mesData.id})
-理由: ${reason}`);
-
-				menuClicker(BLOCK_QUERY_LIST, mesData);
-			}
-
-			// 検知済id保存
-			blacklistSave();
-		}
-	}
-
-	// 後からblacklist_idに登録された場合、
-	function dbCommentBlock(id) {
-		if (msgDB_id.has(id)) {
-			for (let i = msgDB.length - 1; i >= 0; i--) {
-				let mData = msgDB[i];
-				if (mData?.id == id) {
-					msgDB.splice(i, 1);
-					if (mData.base_url == oldUrl) {
-						hideComment(mData, lang_dict.recursiveDetection, false);
-					}
-				}
-			}
-			msgDB_id.delete(id);
-		}
-	}
-
-	function menuClicker(list, mesData) {
-		if (!mesData.menuDOM) {
-			return;
-		}
-		mesData.menuDOM.click();
-		blacklist_id.delete(mesData.id);
-		autoClick(list);
-	}
-
-	// 自動クリック
-	function autoClick(list, par = document.body, i = 0) {
-		if (list.length <= i) {
-			return;
-		}
-		let q = list[i];
-		let j = 0;
-		if (Array.isArray(q)) {
-			j = q[1];
-			q = q[0];
-		}
-		if (q === "__wait__") {
-			setTimeout(function () {
-				autoClick(list, par, i + 1);
-			}, j);
-			return;
-		}
-		let elem = par.querySelectorAll(q)?.[j];
-		// console.log(q,elem)
-		if (elem) {
-			elem.click();
-			autoClick(list, par, i + 1);
-			return;
-		}
-		setTimeout(function () {
-			autoClick(list, par, i);
-		}, 100);
-	}
-
-	// メニューを開く
-	function menuOpen() {
-		log("メニュー表示...開始");
-		if (!exMenuDOM) {
-			menu_init();
-		}
-
-		// DOM 取得
-		let menu_elem = document.getElementById(EX_MENU_ID);
-		if (!menu_elem) {
-			// なければ複製して追加
-			menu_elem = exMenuDOM.cloneNode(true);
-			document.body.appendChild(menu_elem);
-			setEvent("__save", menuSave);
-			setEvent("__close", menuClose);
-
-			setEvent("customCss", OnTabKey, "keydown");
-			setEvent("resetSetting", menuReset);
-			setEvent("resetBlackMemory", blacklistReset);
-			setEvent("debug_viewBlacklist", function () {
-				console.log(blacklist_id);
 			});
-			setEvent("debug_viewMsgDB", function () {
-				console.log(msgDB_id, msgDB);
-			});
-			setEvent("debug_reInit", card_init);
-		}
-		menu_elem.classList.add(EX_MENU_OPEN_CLASS);
-		log("メニュー表示...完了");
-	}
-
-	function setEvent(id, callback, type = "click") {
-		document.getElementById(EX_MENU_ITEM_BASE_ID + id)?.addEventListener(type, callback);
-	}
-
-	// メニューを閉じる
-	function menuClose() {
-		log("メニュー非表示");
-		let menu_elem = document.getElementById(EX_MENU_ID);
-		if (menu_elem) {
-			menu_elem.classList.remove(EX_MENU_OPEN_CLASS);
 		}
 	}
 
-	// データ保存
-	async function menuSave() {
-		log("設定保存...開始");
-		for (let key in SETTING_LIST) {
-			let item = SETTING_LIST[key];
-
-			let elem = document.getElementById(EX_MENU_ITEM_BASE_ID + key);
-			if (elem) {
-				let data = null;
-				switch (item.input) {
-					case "text":
-					case "textarea":
-						data = elem.value;
-						break;
-					case "number":
-						data = parseFloat(elem.value);
-						if (item?.min != null && item.min > data) {
-							data = item.min;
-						}
-						if (item?.max != null && item.max < data) {
-							data = item.max;
-						}
-						break;
-					case "checkbox":
-						data = elem.checked;
-						break;
-					case "radiobutton":
-						// 使ってない
-						break;
-					case "select":
-						for (let i = 0; i < elem.length; i++) {
-							if (elem[i]?.selected) {
-								data = elem[i].value;
-								break;
-							}
-						}
-						break;
-					default:
-						continue;
-				}
-				if (data == null) {
-					continue;
-				}
-				item.data = data;
-			}
-		}
-		let dic = {};
-		for (let key in SETTING_LIST) {
-			let d = SETTING_LIST[key]?.data;
-			let _d = SETTING_LIST[key]?._data;
-			if (d != null && d != _d) {
-				dic[key] = d;
-			}
-		}
-		try {
-			await GM.setValue(SETTING_SAVE_KEY, JSON.stringify(dic));
-		} catch (e) {
-			console.error(e);
-		}
-		log("設定保存...完了");
-		menuClose();
-	}
-
-	async function menuReset() {
-		let cf = lang_dict.sureReset;
-		if (confirm(cf)) {
-			log("リセット処理実行");
-			await GM.deleteValue(SETTING_SAVE_KEY);
-			location.reload();
+	// ==========================================================================================
+	// 汎用 便利関数
+	// ==========================================================================================
+	/**
+	 * ログを判別しやすく
+	 * @param {string} str
+	 * @returns {undefined}
+	 */
+	function log(str) {
+		if (DEBUG) {
+			console.log(`[${PRO_NAME}]`, str);
 		}
 	}
 
-	async function blacklistSave() {
-		if (SETTING_LIST.blackMemory.data) {
-			log("検知済id保存...開始");
-			try {
-				await GM.setValue(BLACK_MEMORY_KEY, JSON.stringify(Array.from(blacklist_id)));
-			} catch (e) {
-				console.error(e);
-			}
-			log("検知済id保存...完了");
-		}
-	}
-
-	async function blacklistReset() {
-		let cf = lang_dict.sureReset;
-		if (confirm(cf)) {
-			log("リセット処理実行");
-			await GM.deleteValue(BLACK_MEMORY_KEY);
-			location.reload();
-		}
-	}
-
-	// 正規表現リスト復元
-	function regRestoration(tag, list) {
-		if (!SETTING_LIST[tag]) {
-			console.warn("不明なtag:" + tag);
-			return;
-		}
-		let spText = SETTING_LIST[tag].data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-		spText.forEach((row) => {
-			if (row.trim().length && !row.startsWith("!#")) {
-				let tmpReg = reRegExpStr(othToHira(row, false));
-				try {
-					list.push([new RegExp(tmpReg, "uim"), row]);
-				} catch (e) {
-					console.error(`[${PRO_NAME}]`, tmpReg, e);
-					SETTING_LIST[tag].isError = true;
-				}
-			}
-		});
-	}
-
-	//####################################################################################################
-
-	// DOMが設置されるまで待機
+	/**
+	 * DOMが設置されるまで待機
+	 * @param {string} selectorTxt
+	 * @param {Function} actionFunction
+	 * @param {boolean} [bWaitOnce=true]
+	 * @param {string} [actionFunction]
+	 * @returns {undefined}
+	 */
 	function waitForKeyElements(
 		selectorTxt, //クエリセレクター
 		actionFunction, //実行関数
@@ -2414,8 +1420,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		}
 	}
 
-	// 不明な空白を半角スペースに
-	function uspTosp(str) {
+	/**
+	 * 不明な空白を半角スペースに
+	 * @param {string} str
+	 * @returns {string}
+	 */
+	function unifiedSpace(str) {
 		str = str.toString();
 		spaceRegList.forEach((reg) => {
 			str = str.replace(reg, " ");
@@ -2423,10 +1433,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		return str;
 	}
 
-	//全ての文字を共通化
-	function othToHira(str, useLowerCase = true) {
-		str = uspTosp(str).normalize("NFKC");
-		othToHiraRegList.forEach((regs) => {
+	/**
+	 * 全ての文字を共通化
+	 * @param {string} str
+	 * @param {boolean} [useLowerCase=true] - 小文字に統一するか
+	 * @returns {string}
+	 */
+	function normalize(str, useLowerCase = true) {
+		str = unifiedSpace(str).normalize("NFKC");
+		normalizeRegList.forEach((regs) => {
 			str = str.replace(...regs);
 		});
 		if (useLowerCase) {
@@ -2435,7 +1450,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		return str;
 	}
 
-	// 困った時のレーベンシュタイン距離
+	/**
+	 * 困った時のレーベンシュタイン距離
+	 * @param {string} str1
+	 * @param {string} str2
+	 * @returns {number}
+	 */
 	function levenshteinDistance(str1, str2) {
 		let r,
 			c,
@@ -2459,9 +1479,13 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		return 1 - d[lr][lc] / Math.max(lr, lc);
 	}
 
-	// unicodeを復元
+	/**
+	 * unicodeを復元
+	 * @param {string} str
+	 * @returns {string}
+	 */
 	function reRegExpStr(str) {
-		return uspTosp(str).replace(/\\x([0-9a-fA-F]{2})|\\u([0-9a-fA-F]{4})|\\u\{([0-9a-fA-F]{1,6})\}/g, function (f, a, b, c) {
+		return unifiedSpace(str).replace(reRegExpReg, function (f, a, b, c) {
 			let str = a ?? b ?? c ?? null;
 			if (str == null) {
 				return f;
@@ -2470,7 +1494,295 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		});
 	}
 
-	// tabをtextareaで入力可能に
+	// ==========================================================================================
+	// 便利関数 GM
+	// ==========================================================================================
+
+	/**
+	 * GMからjsonを取得
+	 * @param {string} key
+	 * @returns {Promise<Object>}
+	 * @async
+	 */
+	async function getGM_json(key) {
+		let data = null;
+		try {
+			data = await GM.getValue(key, null);
+		} catch (e) {
+			console.error(e);
+			return null;
+		}
+		if (data != null) {
+			let jsonData = null;
+			try {
+				jsonData = JSON.parse(data);
+			} catch (e) {
+				console.error(e);
+			}
+			return jsonData;
+		}
+		return null;
+	}
+
+	/**
+	 * GMにjsonを保存
+	 * @param {string} key
+	 * @param {Object} obj
+	 * @returns {Promise<undefined>}
+	 * @async
+	 */
+	async function setGM_json(key, obj) {
+		try {
+			await GM.setValue(key, JSON.stringify(obj));
+			log(obj);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	/**
+	 * GMのjsonをリセット
+	 * @param {string} key
+	 * @param {boolean} [useConf=true] - 確認画面を強制するか
+	 * @returns {undefined}
+	 */
+	async function resetGM_json(key, useConf = true) {
+		let cf = lang_dict.sureReset;
+		if (useConf && confirm(cf)) {
+			try {
+				await GM.deleteValue(key);
+			} catch (e) {
+				console.error(e);
+			}
+			location.reload();
+		}
+	}
+
+	// ==========================================================================================
+	// 便利関数
+	// ==========================================================================================
+	/**
+	 * 正規表現リスト復元
+	 * @param {string} tag
+	 * @returns {undefined}
+	 */
+	function regRestoration(tag) {
+		let setting_data = SETTING_LIST[tag];
+		if (!setting_data) {
+			console.warn("不明なtag:" + tag);
+			return;
+		}
+		let spText = setting_data.data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+		setting_data.regexp_list = [];
+		spText.forEach((row) => {
+			if (row.trim().length && !row.startsWith("!#")) {
+				let tmpReg = reRegExpStr(normalize(row, false));
+				try {
+					setting_data.regexp_list.push([new RegExp(tmpReg, "uim"), row]);
+				} catch (e) {
+					console.error(`[${PRO_NAME}]`, tmpReg, e);
+					setting_data.isError = true;
+				}
+			}
+		});
+	}
+
+	/**
+	 * メニュー項目にイベント設定
+	 * @param {string} id
+	 * @param {Function} callback
+	 * @param {string} [type="click"]
+	 * @returns {undefined}
+	 */
+	function setEvent(id, callback, type = "click") {
+		document.getElementById(ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + id)?.addEventListener(type, callback);
+	}
+
+	// ==========================================================================================
+	// 初期設定関連
+	// ==========================================================================================
+	/**
+	 * 初期設定(1度しか実行するな)
+	 * @returns {Promise<undefined>}
+	 * @async
+	 */
+	async function init() {
+		// 親id取得
+		setParentId();
+
+		// 設定呼び出し
+		log("設定読み込み...開始");
+		{
+			let jsonData = await getGM_json(SETTING_SAVE_KEY);
+			if (jsonData != null) {
+				for (let key in SETTING_LIST) {
+					if (key in jsonData) {
+						SETTING_LIST[key].data = jsonData[key];
+					}
+				}
+			}
+		}
+		lang_dict = LANGUAGE_DICT[SETTING_LIST.language.data ?? "ja"];
+		log("設定読み込み...完了");
+
+		//検知id再取得
+		if (SETTING_LIST.blackMemory.data) {
+			log("検知済id読み込み...開始");
+			let jsonData = await getGM_json(BLACK_MEMORY_KEY);
+			if (jsonData != null) {
+				for (let i = 0, li = jsonData.length; i < li; i++) {
+					let id = jsonData[i];
+					if (id.length > 1 && id.startsWith("@")) {
+						blacklist_id.add(id);
+					} else {
+						log("破損id:" + id);
+					}
+				}
+			}
+			log("検知済id読み込み...完了");
+		}
+
+		// フィルター正規表現設定
+		{
+			// ブラック表現リスト
+			regRestoration("blackTextReg");
+			// ホワイト表現リスト
+			regRestoration("whiteTextReg");
+			// ブラックRT表現リスト
+			//regRestoration("blackRtTextReg");
+			// ブラック名前リスト
+			regRestoration("blackNameReg");
+			// サブ垢定義用表現リスト
+			regRestoration("subDefinitionReg");
+
+			// 除外idリスト
+			let spText = SETTING_LIST.excludedUsers.data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+
+			spText.forEach((row) => {
+				if (row.trim().length && !row.startsWith("!#")) {
+					if (!row.startsWith("@")) {
+						row = "@" + row;
+					}
+					excludedUsersSet.add(row);
+					blacklist_id.delete(row);
+				}
+			});
+
+			// 投稿の言語を制限
+			const allowLang = SETTING_LIST.allowLang;
+			try {
+				let text = allowLang.data.trim();
+				if (text.length) {
+					allowLang.regexp = new RegExp(text, "i");
+				}
+			} catch (e) {
+				console.error(e);
+				allowLang.isError = true;
+			}
+		}
+
+		// 画面移管時対応
+		const body_observer = new MutationObserver(bodyChangeEvent);
+		body_observer.observe(document.body, {
+			subtree: true,
+			childList: true,
+		});
+
+		// カスタムcss設定
+		try {
+			GM.addStyle(BASE_CSS);
+			GM.addStyle(SETTING_LIST.customCss.data);
+		} catch (e) {
+			console.error(e);
+			SETTING_LIST.customCss.isError = true;
+		}
+
+		// 文章類似比較を実行するか
+		if (!SETTING_LIST.maxSaveTextSize.data || SETTING_LIST.maxSaveTextSize.data < SETTING_LIST.minSaveTextSize.data) {
+			levenshteinDistanceUseFlag = false;
+		}
+
+		card_init();
+		// 自動で設定画面を開く
+		if (SETTING_LIST.debug_viewSettingMenu.data) {
+			menuOpen();
+		}
+	}
+
+	// ==========================================================================================
+	// イベント関連
+	// ==========================================================================================
+
+	/**
+	 * メッセージの親を取得
+	 * @returns {undefined}
+	 */
+	function setParentId() {
+		let url = oldUrl.replace(/https?:\/\/.*?\.com/, "");
+		if (url.startsWith("/")) {
+			let urls = url.replace(/\?/, "/").split("/");
+			let uid = urls[1] ?? urls[0];
+			if (ALLOW_PAGE_SET.has(uid)) {
+				stopFlag = true;
+				return;
+			}
+			const isStatusType = urls[2] ?? "";
+			console.log(`isStatusType: ${isStatusType}`);
+			if (!ALLOW_STATUS_SET.has(isStatusType)) {
+				stopFlag = true;
+				return;
+			}
+			if (uid) {
+				uid = "@" + uid;
+				log(`親投稿者: ${uid}`);
+				parent_id = uid;
+				stopFlag = false;
+				// 気分で消しとく
+				blacklist_id.delete(uid);
+			}
+		}
+	}
+
+	/**
+	 * 画面移管対応
+	 * @returns {undefined}
+	 */
+	function bodyChangeEvent() {
+		// 更新過多で重くなるので同時実行禁止
+		if (body_isWait) {
+			body_isReservation = true;
+			return;
+		}
+		body_isWait = true;
+		// 反応しない場合用に一瞬待機
+		setTimeout(function () {
+			// URL変更時のみ
+			if (oldUrl !== location.href) {
+				oldUrl = location.href;
+				setParentId();
+			}
+			if (!document.querySelector("." + ELEM_NAME_DICT.PARENT_CLASS)) {
+				// class 検知
+				if (parent_observer) {
+					parent_observer.disconnect();
+					parent_observer = null;
+				}
+				card_init();
+			}
+			body_isWait = false;
+			// 一応再実行
+			if (body_isReservation) {
+				body_isReservation = false;
+				bodyChangeEvent();
+			}
+		}, SETTING_LIST.bodyObsTimeout.data);
+	}
+
+	/**
+	 * tabをtextareaで入力可能に
+	 * @param {Object} e
+	 * @returns {undefined}
+	 */
 	function OnTabKey(e) {
 		if (e.keyCode != 9) {
 			return;
@@ -2490,10 +1802,886 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		obj.selectionEnd = cursorPosition + 1;
 	}
 
-	// ログを判別しやすく
-	function log(str) {
-		if (DEBUG) {
-			console.log(`[${PRO_NAME}]`, str);
+	// ==========================================================================================
+	// メニュー関連
+	// ==========================================================================================
+	/**
+	 * メニュー初期設定(実質1度しか実行するな)
+	 * @returns {undefined}
+	 */
+	function menu_init() {
+		let w_exMenuDOM = document.createElement("div");
+		let advanceDOM = document.createElement("details");
+		let debugDOM = document.createElement("details");
+		w_exMenuDOM.innerHTML = lang_dict.menu_warn;
+		advanceDOM.innerHTML = lang_dict.menu_advanced;
+		debugDOM.innerHTML = lang_dict.menu_debug;
+		for (let key in SETTING_LIST) {
+			let item = SETTING_LIST[key];
+			// 入力欄作成
+			let inputType = item?.input ?? "";
+			let input_elem = document.createElement("input");
+			input_elem.type = inputType;
+			let add_elem = null;
+			switch (inputType) {
+				case MENU_INPUT_TYPE.text:
+					input_elem.value = item.data;
+					break;
+				case MENU_INPUT_TYPE.num:
+					input_elem.value = item.data;
+					if (item?.min != null) {
+						input_elem.min = item.min;
+					}
+					if (item?.max != null) {
+						input_elem.max = item.max;
+					}
+					if (item?.step != null) {
+						input_elem.step = item.step;
+					}
+					break;
+				case MENU_INPUT_TYPE.check:
+					input_elem.checked = item?.data ?? false;
+					add_elem = document.createElement("span");
+					break;
+				case MENU_INPUT_TYPE.btn:
+					input_elem.value = item.value;
+					break;
+				case MENU_INPUT_TYPE.textarea:
+					input_elem = document.createElement("textarea");
+					input_elem.value = item.data;
+					break;
+				case MENU_INPUT_TYPE.select:
+					input_elem = document.createElement("select");
+					if (item?.select) {
+						let tmp = "";
+						for (let key in item.select) {
+							tmp += `<option value="${key}" ${SETTING_LIST.language.data == key ? "selected" : ""}>${item.select[key]}</option>`;
+						}
+						input_elem.innerHTML = tmp;
+					}
+					break;
+				default:
+					console.warn("対応していない形式", item);
+					continue;
+			}
+			input_elem.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + key;
+
+			// 項目を囲うdiv
+			let div = document.createElement("div");
+			// 名前
+			const trans_name = lang_dict[MENU_LANG_KEY + key + MENU_LANG_KEY_NAME];
+			if (trans_name) {
+				let name_elem = document.createElement("p");
+				name_elem.textContent = trans_name;
+				name_elem.classList.add(ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + "_name");
+				div.appendChild(name_elem);
+			}
+			// 説明
+			const trans_explanation = lang_dict[MENU_LANG_KEY + key + MENU_LANG_KEY_EXPLANATION];
+			if (trans_explanation) {
+				let ex_elem = document.createElement("p");
+				ex_elem.innerHTML = trans_explanation.replace(/\n/g, "<br/>");
+				div.appendChild(ex_elem);
+			}
+
+			div.appendChild(input_elem);
+			if (add_elem) {
+				div.appendChild(add_elem);
+			}
+
+			if (item.isError) {
+				let errDOM = document.createElement("p");
+				errDOM.classList.add(EX_MENU_ITEM_ERROR_CLASS);
+				errDOM.textContent = lang_dict.menu_error;
+				div.appendChild(errDOM);
+			}
+
+			switch (item.group) {
+				case MENU_GROUP_TYPE.basic:
+					w_exMenuDOM.appendChild(div);
+					break;
+				case MENU_GROUP_TYPE.advanced:
+					advanceDOM.appendChild(div);
+					break;
+				case MENU_GROUP_TYPE.debug:
+					debugDOM.appendChild(div);
+					break;
+				default:
+					console.warn("存在しないグループ:", item.group);
+					break;
+			}
 		}
+		w_exMenuDOM.appendChild(advanceDOM);
+		w_exMenuDOM.appendChild(debugDOM);
+		// 画面右下のボタン系
+		{
+			let div = document.createElement("div");
+			div.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + "__btns";
+			let btn_elem = document.createElement("input");
+			btn_elem.type = "button";
+			btn_elem.value = lang_dict.save;
+			btn_elem.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + "__save";
+			div.appendChild(btn_elem);
+			btn_elem = document.createElement("input");
+			btn_elem.type = "button";
+			btn_elem.value = lang_dict.close;
+			btn_elem.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + "__close";
+			div.appendChild(btn_elem);
+			w_exMenuDOM.appendChild(div);
+		}
+		exMenuDOM = document.createElement("div");
+		exMenuDOM.id = EX_MENU_ID;
+		exMenuDOM.lang = SETTING_LIST.language.data;
+		if (isMobile) {
+			exMenuDOM.classList.add(ELEM_NAME_DICT.MOBILE_FLAG_CLASS);
+		} else {
+			exMenuDOM.classList.add(ELEM_NAME_DICT.PC_FLAG_CLASS);
+		}
+		exMenuDOM.appendChild(w_exMenuDOM);
+	}
+
+	/**
+	 * メニューを開く
+	 * @returns {undefined}
+	 */
+	function menuOpen() {
+		log("メニュー表示...開始");
+		if (!exMenuDOM) {
+			menu_init();
+		}
+
+		// DOM 取得
+		let menu_elem = document.getElementById(EX_MENU_ID);
+		if (!menu_elem) {
+			// なければ複製して追加
+			menu_elem = exMenuDOM.cloneNode(true);
+			document.body.appendChild(menu_elem);
+			setEvent("__save", menuSave);
+			setEvent("__close", menuClose);
+
+			setEvent("customCss", OnTabKey, "keydown");
+			setEvent("resetSetting", menuReset);
+			setEvent("resetBlackMemory", blacklistReset);
+			setEvent("debug_viewBlacklist", function () {
+				console.log(blacklist_id);
+			});
+			setEvent("debug_viewMsgDB", function () {
+				console.log(msgDB_id, msgDB);
+			});
+			setEvent("debug_reInit", card_init);
+		}
+		menu_elem.classList.add(ELEM_NAME_DICT.EX_MENU_OPEN_CLASS);
+		log("メニュー表示...完了");
+	}
+
+	/**
+	 * メニューを閉じる
+	 * @returns {undefined}
+	 */
+	function menuClose() {
+		log("メニュー非表示");
+		let menu_elem = document.getElementById(EX_MENU_ID);
+		if (menu_elem) {
+			menu_elem.classList.remove(ELEM_NAME_DICT.EX_MENU_OPEN_CLASS);
+		}
+	}
+
+	/**
+	 * 設定項目保存
+	 * @returns {Promise<undefined>}
+	 * @async
+	 */
+	async function menuSave() {
+		log("設定保存...開始");
+		for (let key in SETTING_LIST) {
+			let item = SETTING_LIST[key];
+
+			let elem = document.getElementById(ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + key);
+			if (elem) {
+				let data = null;
+				switch (item.input) {
+					case MENU_INPUT_TYPE.text:
+					case MENU_INPUT_TYPE.textarea:
+						data = elem.value;
+						break;
+					case MENU_INPUT_TYPE.num:
+						data = parseFloat(elem.value);
+						if (item?.min != null && item.min > data) {
+							data = item.min;
+						}
+						if (item?.max != null && item.max < data) {
+							data = item.max;
+						}
+						break;
+					case MENU_INPUT_TYPE.check:
+						data = elem.checked;
+						break;
+					case MENU_INPUT_TYPE.select:
+						for (let i = 0; i < elem.length; i++) {
+							if (elem[i]?.selected) {
+								data = elem[i].value;
+								break;
+							}
+						}
+						break;
+					default:
+						continue;
+				}
+				if (data == null) {
+					continue;
+				}
+				item.data = data;
+			}
+		}
+		let dic = {};
+		for (let key in SETTING_LIST) {
+			let d = SETTING_LIST[key].data;
+			let _d = SETTING_LIST[key].initData;
+			if (d != null && d != _d) {
+				dic[key] = d;
+			}
+		}
+		await setGM_json(SETTING_SAVE_KEY, dic);
+		log("設定保存...完了");
+		menuClose();
+	}
+
+	/**
+	 * 設定項目リセット
+	 * @returns {undefined}
+	 */
+	async function menuReset() {
+		resetGM_json(SETTING_SAVE_KEY);
+	}
+
+	// ==========================================================================================
+	// カード 関連
+	// ==========================================================================================
+
+	/**
+	 * カード初期化
+	 * @returns {undefined}
+	 */
+	function card_init() {
+		log("初期化中...");
+
+		let tmp = document.querySelector(OBS_QUERY);
+		if (tmp && tmp.classList.contains(ELEM_NAME_DICT.PARENT_CLASS)) {
+			console.log("MutationObserverはすでに設定されています！");
+			return;
+		}
+		// もっと見るフラグ初期化
+		existMoreTweet = false;
+
+		// 表示待機
+		waitForKeyElements(OBS_QUERY, function () {
+			// (投稿リストの)親を取得
+			parentDOM = document.querySelector(OBS_QUERY);
+			if (parentDOM == null) {
+				log(`(${OBS_QUERY})が見つけれませんでした`);
+				return;
+			}
+			parentDOM.classList.add(ELEM_NAME_DICT.PARENT_CLASS);
+
+			// DOM変更検知(イベント)
+			parent_observer = new MutationObserver((records) => {
+				records.forEach((record) => {
+					let addNodes = record.addedNodes;
+					if (addNodes.length) {
+						addNodes.forEach((addNode) => {
+							cardCheck(addNode);
+						});
+					}
+				});
+			});
+			parent_observer.observe(parentDOM, {
+				childList: true,
+				//subtree: true,
+			});
+
+			// 先頭部分が取得出来ていないので再実行
+			parentDOM.querySelectorAll(RE_QUERY).forEach((elem) => {
+				cardCheck(elem);
+			});
+		});
+	}
+
+	/**
+	 * 処理対象判定&処理実行(疑似的に非同期処理に)
+	 * @param {HTMLElement} card_elem
+	 * @returns {undefined}
+	 */
+	function cardCheck(card_elem) {
+		// 処理は1度のみ
+		const CHECK_CLASS = ELEM_NAME_DICT.CHECK_CLASS;
+		if (card_elem.classList.contains(CHECK_CLASS)) {
+			return;
+		}
+		card_elem.classList.add(CHECK_CLASS);
+
+		// もっと見るが判定されてしまう問題をゴリ押しで対処
+		if (existMoreTweet) {
+			const MORE_TWEET_CLASS = ELEM_NAME_DICT.MORE_TWEET_CLASS;
+			let tmp_elem = card_elem;
+			for (let i = 0; i < 5; i++) {
+				tmp_elem = tmp_elem.previousElementSibling;
+				if (!tmp_elem) {
+					break;
+				}
+				if (tmp_elem.classList.contains(MORE_TWEET_CLASS)) {
+					card_elem.classList.add(MORE_TWEET_CLASS);
+					return;
+				}
+			}
+		} else {
+			if (card_elem.querySelector("h2")) {
+				existMoreTweet = true;
+				card_elem.classList.add(ELEM_NAME_DICT.MORE_TWEET_CLASS);
+			}
+		}
+
+		const md = new MessageData(oldUrl, card_elem);
+		// 有効なデータか判定
+		let getPro = md.cardDataGet();
+		if (getPro === false) return;
+		getPro
+			.then(() => {
+				let ret = commentFilter(md);
+				let id;
+
+				switch (ret[0]) {
+					case FILTED_HIDDEN_ID.processed:
+						// 処理済
+						return;
+					case FILTED_HIDDEN_ID.evaluated:
+						// 取得,判定済投稿
+						return;
+					case FILTED_HIDDEN_ID.newEntry:
+						// 問題なし
+						addDB(md);
+						return;
+					case FILTED_HIDDEN_ID.commentFilterDetection:
+						// コメントフィルターに反応
+						hideComment(md, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.commentEmojiOnly:
+						// 絵文字のみ(スパム)
+						hideComment(md, `<span title="comment">${lang_dict.emojiOnly}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.textDuplication:
+						// コピペ
+						hideComment(md, `<span title="${lang_dict.similarity}:${((ret[1] * 10000) | 0) / 100}%">${lang_dict.textDuplication}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.highUsage:
+						// 異常なハッシュタグの使用
+						hideComment(md, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.selfCitation:
+						// 自分自身の引用
+						hideComment(md, lang_dict.selfCitation);
+						return;
+					case FILTED_HIDDEN_ID.nameFilterDetection:
+						// 名前フィルターに反応
+						hideComment(md, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.nameEmojiOnly:
+						// 名前が絵文字のみ
+						hideComment(md, `<span title="name">${lang_dict.emojiOnly}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.verifyRtBlock:
+						// 認証済アカウントをRTするな
+						hideComment(md, lang_dict.verifyRtBlock);
+						return;
+					case FILTED_HIDDEN_ID.symbolUsage:
+						// 異常なシンボルタグの使用
+						hideComment(md, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.detectedElsewhere:
+						// 他で検出済
+						hideComment(md, lang_dict.detectedElsewhere);
+						return;
+					case FILTED_HIDDEN_ID.authenticatedAccount:
+						// 認証済アカウント
+						hideComment(md, lang_dict.authenticatedAccount);
+						return;
+					case FILTED_HIDDEN_ID.unauthorizedLanguage:
+						// 投稿言語の制限
+						hideComment(md, `<span title="${ret[1]}">${lang_dict.unauthorizedLanguage}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.selfCitationSub:
+						// サブ垢で己をRTすんな
+						hideComment(md, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.selfCitationSub}</span>`);
+						return;
+					case FILTED_HIDDEN_ID.contributtonCount:
+						// 連投検出
+						hideComment(md, lang_dict.contributtonCount);
+						return;
+					case FILTED_HIDDEN_ID.rtContributtonCount:
+						// RT連投検出
+						hideComment(md, lang_dict.rtContributtonCount);
+						return;
+					case FILTED_HIDDEN_ID.rtSharingSeries:
+						// 同一ユーザーRT検出
+						for (let msgData of ret[1]) {
+							hideComment(msgData, lang_dict.rtSharingSeries);
+						}
+						return;
+				}
+			})
+			.catch(console.warn);
+	}
+
+	// ==========================================================================================
+	// フィルター
+	// ==========================================================================================
+	/**
+	 * コメントをフィルタリング
+	 * @param {MessageData} md
+	 * @returns {number}
+	 */
+	function commentFilter(md) {
+		// log(md);
+
+		// 投稿主保護
+		if (md.id == parent_id) {
+			addDB(md);
+			return [FILTED_HIDDEN_ID.processed];
+		}
+		// 除外ユーザー保護
+		if (excludedUsersSet.has(md.id)) {
+			addDB(md);
+			return [FILTED_HIDDEN_ID.processed];
+		}
+		// 認証公式アカウント保護
+		if (SETTING_LIST.formalityCare.data && md.formality) {
+			addDB(md);
+			return [FILTED_HIDDEN_ID.processed];
+		}
+		// blacklist_id比較
+		if (blacklist_id.has(md.id)) {
+			return [FILTED_HIDDEN_ID.detectedElsewhere];
+		}
+		// 認証済アカウント強制ブロック
+		if (SETTING_LIST.verifyBlock.data && md.verify) {
+			return [FILTED_HIDDEN_ID.authenticatedAccount];
+		}
+		// 投稿言語の制限
+		for (let div of md._text_divs) {
+			if (!SETTING_LIST.allowLang.regexp.test(div.lang)) {
+				return [FILTED_HIDDEN_ID.unauthorizedLanguage, div.lang];
+			}
+		}
+
+		// 無言で無言の引用リツイートしている場合
+		if (md.reTweet && md._notTextDiv) {
+			// 自分自身の場合
+			if (SETTING_LIST.oneselfRetweetBlock.data && md.reTweet.id == md.id) {
+				return [FILTED_HIDDEN_ID.selfCitation];
+			}
+			// 認証済アカウントをRTするな
+			if (SETTING_LIST.verifyRtBlock.data && md.reTweet.verify) {
+				return [FILTED_HIDDEN_ID.verifyRtBlock];
+			}
+			//サブ垢判定
+			if (SETTING_LIST.oneselfSubRetweetBlock) {
+				for (let reg of subDefinitionList_reg) {
+					if (md.cleanName.replace(reg[0], "") == md.reTweet.cleanName.replace(reg[0], "")) {
+						return [FILTED_HIDDEN_ID.selfCitationSub, reg[1]];
+					}
+				}
+			}
+		}
+		let message = md.cleanMessage;
+		if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !md.attach_img) {
+			return [FILTED_HIDDEN_ID.commentEmojiOnly];
+		}
+		if (SETTING_LIST.emojiOnryNameBlock.data && !md.name.replace(spaceReg, "")?.length) {
+			md.name = md.id;
+			return [FILTED_HIDDEN_ID.nameEmojiOnly];
+		}
+
+		// 引用リツイートしている場合
+		if (md.reTweet && !md._notTextDiv) {
+			// 自分自身の場合
+			if (SETTING_LIST.oneselfRetweetBlock.data && md.reTweet.id == md.id) {
+				return [FILTED_HIDDEN_ID.selfCitation];
+			}
+			// 認証済アカウントをRTするな
+			if (SETTING_LIST.verifyRtBlock.data && md.reTweet.verify) {
+				return [FILTED_HIDDEN_ID.verifyRtBlock];
+			}
+			//サブ垢判定
+			if (SETTING_LIST.oneselfSubRetweetBlock) {
+				for (let reg of subDefinitionList_reg) {
+					if (md.cleanName.replace(reg[0], "") == md.reTweet.cleanName.replace(reg[0], "")) {
+						return [FILTED_HIDDEN_ID.selfCitationSub, reg[1]];
+					}
+				}
+			}
+		}
+
+		// コメントフィルターによる検出
+		for (let reg of SETTING_LIST.blackTextReg.regexp_list) {
+			if (reg[0].test(message)) {
+				return [FILTED_HIDDEN_ID.commentFilterDetection, reg[1]];
+			}
+		}
+		// 名前フィルターによる検出
+		let username = md.cleanName;
+		for (let reg of SETTING_LIST.blackNameReg.regexp_list) {
+			if (reg[0].test(username)) {
+				return [FILTED_HIDDEN_ID.nameFilterDetection, reg[1]];
+			}
+		}
+
+		// 異常なハッシュタグの使用回数
+		let hashtagCou = message.match(/#[^ ]+/g)?.length ?? 0;
+		if (hashtagCou >= SETTING_LIST.maxHashtagCount.data) {
+			return [FILTED_HIDDEN_ID.highUsage, hashtagCou];
+		}
+		// 異常なシンボルタグの使用回数
+		let symboltagCou = message.match(/\$[^ ]+/g)?.length ?? 0;
+		if (symboltagCou >= SETTING_LIST.maxSymboltagCount.data) {
+			return [FILTED_HIDDEN_ID.symbolUsage, symboltagCou];
+		}
+
+		// 短い文字列は比較しない(誤爆対処)
+		let min_sts = SETTING_LIST.minSaveTextSize.data;
+		if (levenshteinDistanceUseFlag && md.message_len >= min_sts) {
+			// コピぺチェック
+			let max_sts = SETTING_LIST.maxSaveTextSize.data;
+			let al = md.message_len;
+			let am = md.time_value;
+			for (let msgData of msgDB) {
+				let a = message;
+				let b = msgData.cleanMessage;
+				let bl = msgData.message_len;
+				let m = Math.min(al, bl, max_sts);
+				if (m < min_sts) {
+					continue;
+				}
+				if (m != al) {
+					a = a.substring(0, m);
+				}
+				if (m != bl) {
+					b = b.substring(0, m);
+				}
+
+				// 一度取得したツイートだった場合
+				let bm = msgData.time_value;
+				if (am == bm && md.id == msgData.id && md.cleanMessage == msgData.cleanMessage) {
+					return [FILTED_HIDDEN_ID.evaluated];
+				}
+
+				let ld = levenshteinDistance(a, b);
+				if (ld >= SETTING_LIST.msgResemblance.data) {
+					if (am > bm) {
+						return [FILTED_HIDDEN_ID.textDuplication, ld];
+					} else {
+						blacklist_id.add(msgData.id);
+						break;
+					}
+				}
+			}
+		} else {
+			// 比較が行われない場合の代替処理
+			let am = md.time_value;
+			for (let msgData of msgDB) {
+				let bm = msgData.time_value;
+				if (am == bm && md.id == msgData.id && md.cleanMessage == msgData.cleanMessage) {
+					return [FILTED_HIDDEN_ID.evaluated];
+				}
+			}
+		}
+
+		let id = md.id;
+		if (msgDB_id.has(id)) {
+			let bu = md.base_url;
+			// 連投検出
+			if (SETTING_LIST.maxContributtonCount.data > 0) {
+				let cou = 0;
+				for (let msgData of msgDB) {
+					if (msgData.id == id && msgData.base_url == bu) {
+						cou++;
+					}
+				}
+				if (SETTING_LIST.maxContributtonCount.data <= cou) {
+					return [FILTED_HIDDEN_ID.contributtonCount];
+				}
+			}
+			// RT連投検出
+			if (SETTING_LIST.maxRtCount.data > 0 && md.reTweet) {
+				let cou = 0;
+				let rtl = new Set(md.reTweet.id);
+				for (let msgData of msgDB) {
+					if (msgData.id == id && msgData.base_url == bu && msgData.reTweet) {
+						cou++;
+						rtl.add(msgData.reTweet.id);
+					}
+				}
+				if (SETTING_LIST.maxRtCount.data <= cou) {
+					// 引用先も一応抹消
+					for (let rt of rtl) {
+						blacklist_id.add(rt);
+					}
+					return [FILTED_HIDDEN_ID.rtContributtonCount];
+				}
+			}
+			// 同一ユーザーRT検出
+			if (SETTING_LIST.maxSameRtCount.data > 0 && md.reTweet) {
+				let rt = md.reTweet.id;
+				let cou = 0;
+				let us = new Set(id);
+				let usd = [md];
+				for (let msgData of msgDB) {
+					if (msgData.base_url == bu && msgData.reTweet?.id == rt) {
+						cou++;
+						if (!us.has(msgData.id)) {
+							us.add(msgData.id);
+							usd.push(msgData);
+						}
+					}
+				}
+				if (SETTING_LIST.maxRtCount.data <= cou) {
+					// 引用先も一応抹消
+					blacklist_id.add(rt);
+					return [FILTED_HIDDEN_ID.rtSharingSeries, usd];
+				}
+			}
+		}
+
+		return [FILTED_HIDDEN_ID.newEntry];
+	}
+
+	// ==========================================================================================
+	// tweet操作
+	// ==========================================================================================
+
+	/**
+	 * ツイート非表示
+	 * @param {MessageData} md
+	 * @param {string} reason - 理由
+	 * @param {boolean} [ch=true] - 2重参照回避
+	 * @returns {undefined}
+	 */
+	function hideComment(md, reason, ch = true) {
+		// TLTW以外では大人しく
+		if (stopFlag) {
+			addDB(md);
+			return;
+		}
+		// 認証済アカウントのみ判定
+		if (SETTING_LIST.verifyOnryFilter.data && !md.verify) {
+			addDB(md);
+			return;
+		}
+		blacklist_id.add(md.id);
+
+		// フィルターによる検出
+		for (let reg of SETTING_LIST.whiteTextReg.regexp_list) {
+			if (reg[0].test(md.cleanMessage)) {
+				return;
+			}
+		}
+
+		md.card.classList.add(ELEM_NAME_DICT.HIDE_CLASS);
+
+		if (SETTING_LIST.visibleLog.data) {
+			let div = document.createElement("div");
+			div.classList.add(ELEM_NAME_DICT.LOG_CLASS);
+
+			let bstw = lang_dict.viewOriginalTweet;
+
+			let isVerify = "";
+			if (SETTING_LIST.visibleVerifyLog.data && md.verify) {
+				isVerify = VERIFY_SVG;
+			}
+
+			div.innerHTML = /* html */ `
+<span>[${reason}] <a href="/${md.id.slice(1)}" title="${md.id}">${md.name}</a> ${isVerify}</span>
+
+<label><input type="checkbox">${bstw}</label>
+`;
+			if (SETTING_LIST.visibleBlockButton.data) {
+				let blockBtn = document.createElement("input");
+				blockBtn.type = "button";
+				blockBtn.value = "Block";
+				div.firstElementChild.appendChild(blockBtn);
+				blockBtn.addEventListener("click", function () {
+					twitterMenuClicker(BLOCK_QUERY_LIST, md);
+				});
+			}
+			if (SETTING_LIST.visibleReportButton.data) {
+				let reportBtn = document.createElement("input");
+				reportBtn.type = "button";
+				reportBtn.value = "Report";
+				div.firstElementChild.appendChild(reportBtn);
+				reportBtn.addEventListener("click", function () {
+					twitterMenuClicker(REPORT_QUERY_LIST, md);
+				});
+			}
+			md.card.prepend(div);
+		}
+		// 無駄な比較をしないように
+		if (ch) {
+			dbCommentBlock(md.id);
+
+			if (SETTING_LIST.autoBlock.data) {
+				console.log(`自動ブロック: ${md.name}(${md.id})
+理由: ${reason}`);
+
+				twitterMenuClicker(BLOCK_QUERY_LIST, md);
+			}
+
+			// 検知済id保存
+			blacklistSave();
+		}
+	}
+
+	// --------------------------------------------------
+	/**
+	 * twitterのメニューを開くやつ
+	 * @param {string[]} list
+	 * @param {Object} mesData
+	 * @returns {undefined}
+	 */
+	function twitterMenuClicker(list, mesData) {
+		if (!mesData.menuDOM) {
+			return;
+		}
+		mesData.menuDOM.click();
+		blacklist_id.delete(mesData.id);
+		autoClick(list);
+	}
+
+	// --------------------------------------------------
+	/**
+	 * 自動クリック
+	 * @param {string[]} list
+	 * @param {HTMLElement} [par=document.body]
+	 * @param {Object} [i=0]
+	 * @returns {undefined}
+	 */
+	function autoClick(list, par = document.body, i = 0) {
+		if (list.length <= i) {
+			return;
+		}
+		let q = list[i];
+		let j = 0;
+		if (Array.isArray(q)) {
+			j = q[1];
+			q = q[0];
+		}
+		if (q === "__wait__") {
+			setTimeout(function () {
+				autoClick(list, par, i + 1);
+			}, j);
+			return;
+		}
+		let elem = par.querySelectorAll(q)?.[j];
+		// console.log(q,elem)
+		if (elem) {
+			elem.click();
+			autoClick(list, par, i + 1);
+			return;
+		}
+		setTimeout(function () {
+			autoClick(list, par, i);
+		}, 100);
+	}
+
+	// ==========================================================================================
+	// msgDB操作
+	// ==========================================================================================
+
+	/**
+	 * msgDBに追加
+	 * @param {MessageData} md
+	 * @returns {undefined}
+	 */
+	function addDB(md) {
+		msgDB_id.add(md.id);
+		/*// 短いと誤爆するため
+        if (md.message_len < SETTING_LIST.minSaveTextSize.data) {
+            return;
+        }*/
+		if (msgDB.length > SETTING_LIST.maxSaveLogSize.data) {
+			msgDB.shift();
+		}
+		msgDB.push(md);
+		log(msgDB.length);
+	}
+
+	/**
+	 * 後からblacklist_idに登録された場合
+	 * @param {string} id
+	 * @returns {undefined}
+	 */
+	function dbCommentBlock(id) {
+		if (msgDB_id.has(id)) {
+			for (let i = msgDB.length - 1; i >= 0; i--) {
+				const md = msgDB[i];
+				if (md?.id == id) {
+					msgDB.splice(i, 1);
+					if (md.base_url == oldUrl) {
+						hideComment(md, lang_dict.recursiveDetection, false);
+					}
+				}
+			}
+			msgDB_id.delete(id);
+		}
+	}
+
+	/**
+	 * 検知済id保存
+	 * @returns {Promise<undefined>}
+	 * @async
+	 */
+	async function blacklistSave() {
+		if (SETTING_LIST.blackMemory.data) {
+			log("検知済id保存...開始");
+			await setGM_json(BLACK_MEMORY_KEY, Array.from(blacklist_id));
+			log("検知済id保存...完了");
+		}
+	}
+
+	/**
+	 * 検知済idリセット
+	 * @returns {undefined}
+	 */
+	function blacklistReset() {
+		resetGM_json(BLACK_MEMORY_KEY);
+	}
+
+	// ==========================================================================================
+	// 本体
+	// ==========================================================================================
+	log("起動中...");
+
+	init();
+
+	// メニュー表示ボタン定義
+	if (GM?.registerMenuCommand && !isMobile) {
+		const menu_command_id_1 = GM.registerMenuCommand(
+			"Settings",
+			function (event) {
+				menuOpen();
+			},
+			{
+				accessKey: "s",
+				autoClose: true,
+			}
+		);
+	} else {
+		let btn = document.createElement("input");
+		btn.id = EX_MENU_OPEN_BUTTON;
+		btn.addEventListener("click", () => {
+			menuOpen();
+		});
+		btn.type = "button";
+		btn.value = "disp:menu";
+		waitForKeyElements(`body`, (e) => {
+			e.appendChild(btn);
+		});
 	}
 })();
