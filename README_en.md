@@ -1,10 +1,10 @@
 ## Hide the Twitter (formerly: 𝕏) impression-earning scammers with "display:none;"
 
-![GitHub License](https://img.shields.io/github/license/hi2ma-bu4/X_impression_hide)
-![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/484303)
+[![GitHub License](https://img.shields.io/github/license/hi2ma-bu4/X_impression_hide)](https://github.com/hi2ma-bu4/X_impression_hide/blob/main/LICENSE)
+[![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/484303)](https://greasyfork.org/ja/scripts/484303/stats)
 
-![GitHub Release](https://img.shields.io/github/v/release/hi2ma-bu4/X_impression_hide?label=github)
-![Greasy Fork Version](https://img.shields.io/greasyfork/v/484303)
+[![GitHub Release](https://img.shields.io/github/v/release/hi2ma-bu4/X_impression_hide?label=github)](https://github.com/hi2ma-bu4/X_impression_hide/releases)
+[![Greasy Fork Version](https://img.shields.io/greasyfork/v/484303)](https://greasyfork.org/ja/scripts/484303)
 
 <sub>The Twitter hashtag is "#インプレゾンビをnoneするやつ"</sub>
 

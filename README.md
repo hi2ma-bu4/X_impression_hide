@@ -1,10 +1,10 @@
 ## Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdisplay:none;するやつ
 
-![GitHub License](https://img.shields.io/github/license/hi2ma-bu4/X_impression_hide)
-![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/484303)
+[![GitHub License](https://img.shields.io/github/license/hi2ma-bu4/X_impression_hide)](https://github.com/hi2ma-bu4/X_impression_hide/blob/main/LICENSE)
+[![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/484303)](https://greasyfork.org/ja/scripts/484303/stats)
 
-![GitHub Release](https://img.shields.io/github/v/release/hi2ma-bu4/X_impression_hide?label=github)
-![Greasy Fork Version](https://img.shields.io/greasyfork/v/484303)
+[![GitHub Release](https://img.shields.io/github/v/release/hi2ma-bu4/X_impression_hide?label=github)](https://github.com/hi2ma-bu4/X_impression_hide/releases)
+[![Greasy Fork Version](https://img.shields.io/greasyfork/v/484303)](https://greasyfork.org/ja/scripts/484303)
 
 
 <sub>略して「#インプレゾンビをnoneするやつ」</sub>
@@ -80,7 +80,7 @@ Tampermonkeyに追加するだけで使用できます。
 |【非推奨】自動ブロック|検出された対象を自動でブロックします[^6]。|false|boolean|
 |設定のリセット|設定項目をリセットします|||
 |検知済idのリセット|検知済idをリセットします。|||
-|起動時設定自動表示|設定画面を自動で開く|false|bollean|
+|起動時設定自動表示|設定画面を自動で開く|false|boolean|
 
 [^1]: 半角カタカナ、カタカナはひらがなに自動変換され、<br>全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます。
 [^2]: "!#"を行頭に記述するとコメントアウト扱いになります。
