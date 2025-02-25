@@ -20,6 +20,8 @@
 > <br>
 > v1.11.11からkiwiブラウザ対応！
 > <br>
+> v2.1.3からOldTweetDeck部分対応！
+> <br>
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)が必要です。
 
@@ -40,10 +42,10 @@ Tampermonkeyに追加するだけで使用できます。
 また、Gresy Forkのページは[こちら](https://greasyfork.org/ja/scripts/484303-twitter-%E6%97%A7-%F0%9D%95%8F-%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display-none-%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4)からどうぞ。
 
 設定は
-> 右クリック > Tampermonkey > Twitter(旧:𝕏)の(略) > 設定を開く
+> 右クリック > Tampermonkey > Twitter(旧:𝕏)の(略) > Settings
 
 か、
-> 右上拡張機能一覧 > Tampermonkey > Twitter(旧:𝕏)の(略) > 設定を開く(s)
+> 右上拡張機能一覧 > Tampermonkey > Twitter(旧:𝕏)の(略) > Settings(s)
 
 で、開く事ができます。
 

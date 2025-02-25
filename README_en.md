@@ -13,11 +13,15 @@
 Currently not updating.
 If it stops working, please report it to Issues and we will fix it.
 
+The latest and most correct content is in the [Japanese version](README.md).
+
 ### Prerequisite
 > [!WARNING]
 > <s>This is for PC use only.</s>
 > <br>
 > Kiwi browser compatible from v1.11.11!
+> <br>
+> OldTweetDeck is now supported from v2.1.3!
 > <br>
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) is required.
@@ -39,10 +43,10 @@ You can add it [here](https://github.com/hi2ma-bu4/X_impression_hide/raw/main/sc
 Also, you can find the Greasy Fork page [here](https://greasyfork.org/ja/scripts/484303-twitter-%E6%97%A7-%F0%9D%95%8F-%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%97%E3%83%AC%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E5%B0%8F%E9%81%A3%E3%81%84%E7%A8%BC%E3%81%8E%E9%87%8E%E9%83%8E%E3%81%A9%E3%82%82%E3%82%92display-none-%E3%81%99%E3%82%8B%E3%82%84%E3%81%A4).
 
 The setting is
-> right-click > Tampermonkey > Hide the Twitter... > 設定を開く
+> right-click > Tampermonkey > Hide the Twitter... > Settings
 
 or
-> Extensions Menu in the Upper Right Corner > Tampermonkey > Hide the Twitter... > 設定を開く(s)
+> Extensions Menu in the Upper Right Corner > Tampermonkey > Hide the Twitter... > Settings(s)
 
 and you can open it.
 
