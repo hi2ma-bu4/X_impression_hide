@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             2.1.2
+// @version             2.1.3
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -70,13 +70,13 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 	("use strict");
 
 	const PRO_NAME = "X_impression_hide";
-	const VERSION = "v2.1.2";
+	const VERSION = "v2.1.3";
 
 	// スマホ判定
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 	// ここから設定
-	const DEBUG = false;
+	const DEBUG = true;
 
 	// ==========================================================================================
 	// 設定初期値(定数)
@@ -288,6 +288,8 @@ NFT|投資
 		EX_MENU_ITEM_ERROR_CLASS: EX_MENU_ID + "_err",
 		// Userscripts対応(ゴリ押し)
 		EX_MENU_OPEN_BUTTON: EX_MENU_ID + "_openBtn",
+		// OldTweetDeck対応(ゴリ押し)
+		USE_TWEET_DECK_CLASS: PRO_NAME + "_tweetDeck",
 	};
 
 	// ==========================================================================================
@@ -331,16 +333,17 @@ NFT|投資
 }
 
 /* ツイート非表示 */
-.${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS} input[type=checkbox]:not(:checked)) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}), .${ELEM_NAME_DICT.HIDE_CLASS}:not(:has(.${ELEM_NAME_DICT.LOG_CLASS})) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}) {
+.${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS} input[type=checkbox]:not(:checked)) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}),
+.${ELEM_NAME_DICT.HIDE_CLASS}:not(:has(.${ELEM_NAME_DICT.LOG_CLASS})) > div:not(.${ELEM_NAME_DICT.LOG_CLASS}) {
     display: none;
 }
 
-.${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS}):not(:has(article)) {
+body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:has(.${ELEM_NAME_DICT.LOG_CLASS}):not(:has(article)) {
     display: none;
 }
 
 /* 検出内容の表示設定 */
-.${ELEM_NAME_DICT.HIDE_CLASS} {
+.${ELEM_NAME_DICT.PARENT_CLASS} .${ELEM_NAME_DICT.HIDE_CLASS} {
     background: #aaaa;
 }
 
@@ -486,6 +489,7 @@ NFT|投資
 	const MENU_GROUP_TYPE = {
 		basic: "basic",
 		advanced: "advanced",
+		tweetDeck: "tweetDeck",
 		debug: "debug",
 	};
 	// --------------------------------------------------
@@ -527,7 +531,7 @@ NFT|投資
 	// 許可URL (ページ)
 	const ALLOW_PAGE_SET = new Set(["home", "search"]);
 	// 許可URL (ステータス)
-	const ALLOW_STATUS_SET = new Set(["status"]);
+	const ALLOW_STATUS_SET = new Set(["status", "tweetdeck"]);
 
 	// --------------------------------------------------
 	// 翻訳key
@@ -548,10 +552,9 @@ NFT|投資
 <small>現在のバージョン: ${VERSION}</small><br>
 <small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
 <small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`,
-			menu_advanced: /* html */ `
-<summary>高度な設定</summary>`,
-			menu_debug: /* html */ `
-<summary>デバッグ</summary>`,
+			menu_advanced: "高度な設定",
+			menu_tweetDeck: "OldTweetDeck",
+			menu_debug: "デバッグ",
 			menu_error: "上記の設定内容の実行に失敗しました",
 			save: "保存",
 			close: "閉じる",
@@ -674,6 +677,13 @@ idは完全一致のみ有効です。`,
 (ページがリロードされます)
 <span style="color: #f00">実行するとこれまで検知・非表示にされたユーザーが再度表示される可能性が高くなります！
 [検知対象の記憶]を使用している状況で以前より処理が重いと感じた場合、リセットすると処理が軽くなる可能性があります。</span>`,
+			menu_enableOldTweetDeckMode_name: "OldTweetDeck対応",
+			menu_enableOldTweetDeckMode_explanation: `負荷軽減の為に分離
+<span style="color: #f00">※この機能はbeta版です！！
+動作の安定性を保証出来ません。</span>`,
+			menu_autoLoadJQuery_name: "jQuery自動読み込み",
+			menu_autoLoadJQuery_explanation: `OldTweetDeckではなぜかjQueryが使用されているのにjQueryが読み込まれていない為、
+jQueryが読み込まれていない場合にjQueryを読み込む機能です。`,
 			menu_debug_viewSettingMenu_name: "起動時設定自動表示",
 			menu_debug_viewSettingMenu_explanation: `設定画面を自動で開く`,
 			menu_debug_viewBlacklist_name: "blacklist表示",
@@ -707,10 +717,9 @@ idは完全一致のみ有効です。`,
 <small>Current version: ${VERSION}</small><br>
 <small style="color:#d00">If you have saved the changes, please refresh the page.</small><br>
 <small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`,
-			menu_advanced: /* html */ `
-<summary>Advanced settings</summary>`,
-			menu_debug: /* html */ `
-<summary>Debug</summary>`,
+			menu_advanced: "Advanced settings",
+			menu_tweetDeck: "OldTweetDeck",
+			menu_debug: "Debug",
 			menu_error: "Failed to execute the above settings",
 			save: "Save",
 			close: "Close",
@@ -833,6 +842,12 @@ Even false positives are blocked without hesitation.</span>`,
 (The page will be reloaded.)
 <span style="color: #f00">If you run it, there is a high possibility that users who have been detected/hidden will be displayed again!
 If you feel that the processing is slower than before when using [Remember detection targets], resetting it may make the processing faster. </span>`,
+			menu_enableOldTweetDeckMode_name: "OldTweetDeck compatible",
+			menu_enableOldTweetDeckMode_explanation: `Separated to reduce load
+<span style="color: #f00">*This feature is in beta version! !
+We cannot guarantee the stability of operation.</span>`,
+			menu_autoLoadJQuery_name: "jQuery Autoload",
+			menu_autoLoadJQuery_explanation: `For some reason, jQuery is used in OldTweetDeck but is not loaded, so this function loads jQuery when jQuery is not loaded.`,
 			menu_debug_viewSettingMenu_name: "Automatic display of settings at startup",
 			menu_debug_viewSettingMenu_explanation: `Automatically open the settings screen`,
 			menu_debug_viewBlacklist_name: "Blacklist display",
@@ -874,28 +889,91 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
 	// --------------------------------------------------
 
-	const OBS_QUERY = "section > div > div:has(article)";
-	const RE_QUERY = `div:has(div > div > article):not(.${ELEM_NAME_DICT.CHECK_CLASS})`;
-	const NAME_SPACE_QUERY = `[data-testid="User-Name"]`;
-	const NAME_QUERY = `:not(span) > span > span`;
-	const ID_QUERY = "div > span:not(:has(span))";
-	const VERIFY_QUERY = `svg:not(:has([fill^="#"]))`;
-	const VERIFY_FORMALITY_QUERY = `svg:has([fill^="#"])`;
-	const IMAGE_QUERY = `a img, [data-testid="videoComponent"] video`;
-	const MENU_BUTTON_QUERY = "[aria-haspopup=menu][role=button]:has(svg)";
-	let MENU_DISP_QUERY;
+	/**
+	 * 標準参照Query一覧
+	 * @enum {string}
+	 */
+	const _BASIC_QUERY_DICT = {
+		OBS_QUERY: "section > div > div:has(article)",
+		RE_QUERY: `div:has(div > div > article):not(.${ELEM_NAME_DICT.CHECK_CLASS})`,
+		NAME_SPACE_QUERY: `[data-testid="User-Name"]`,
+		NAME_QUERY: `:not(span) > span > span`,
+		ID_QUERY: "div > span:not(:has(span))",
+		VERIFY_QUERY: `svg:not(:has([fill^="#"]))`,
+		VERIFY_FORMALITY_QUERY: `svg:has([fill^="#"])`,
+		TEXT_DIV_QUERY: "div[lang]",
+		IMAGE_QUERY: `a img, [data-testid="videoComponent"] video`,
+		MENU_BUTTON_QUERY: "[aria-haspopup=menu][role=button]:has(svg)",
+		MENU_DISP_QUERY: "[role=group] [role=menu]",
+	};
 	if (isMobile) {
-		MENU_DISP_QUERY = "#layers [role=menu] [role=group]";
-	} else {
-		MENU_DISP_QUERY = "[role=group] [role=menu]";
+		_BASIC_QUERY_DICT.MENU_DISP_QUERY = "#layers [role=menu] [role=group]";
 	}
 
-	const BLOCK_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`, "[role=alertdialog] [role=group] [role=button] div"];
+	/**
+	 * OldTweetDeck参照Query一覧
+	 * @enum {string}
+	 */
+	const _OLD_TWEET_DECK_QUERY_DICT = {
+		OBS_QUERY: "body .js-app-columns:has(section)",
+		RE_QUERY: `article:has(div > div > header):not(.${ELEM_NAME_DICT.CHECK_CLASS})`,
+		NAME_SPACE_QUERY: "header",
+		NAME_QUERY: ".fullname",
+		ID_QUERY: ".username",
+		TEXT_DIV_QUERY: ".tweet-text",
+	};
 
-	/*
-    3行目は場合によっては消す
-    */
-	const REPORT_QUERY_LIST = [`${MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M3 2h18"])`, ["[role=radiogroup] label", 5], "[role=group]:has([role=radiogroup]) [role=button]:not(:has(svg))", ["[role=group] [role=button]:not(:has(svg))", 1], ["__wait__", 1000], ["[role=group] [role=button]:not(:has(svg))", 1]];
+	/**
+	 * 参照Query一覧
+	 * @enum {string}
+	 */
+	const EX_QUERY_DICT = new Proxy(_BASIC_QUERY_DICT, {
+		get(target, prop, receiver) {
+			if (useOldTweetDeck) {
+				let ret = _OLD_TWEET_DECK_QUERY_DICT[prop];
+				if (ret) return ret;
+			}
+			return target[prop];
+		},
+		set(target, prop, value, receiver) {
+			console.warn(`Cannot assign to read-only property: ${prop}`);
+			return false;
+		},
+	});
+
+	/**
+	 * 標準参照Queryリスト一覧
+	 * @enum {Array<string|[string,number]>}
+	 */
+	const _BASIC_QUERY_LIST_DICT = {
+		BLOCK_QUERY_LIST: [`${_BASIC_QUERY_DICT.MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M12 3.75c"])`, "[role=alertdialog] [role=group] [role=button] div"],
+		// 3行目は場合によっては消す
+		REPORT_QUERY_LIST: [`${_BASIC_QUERY_DICT.MENU_DISP_QUERY} div[role=menuitem]:has(path[d^="M3 2h18"])`, ["[role=radiogroup] label", 5], "[role=group]:has([role=radiogroup]) [role=button]:not(:has(svg))", ["[role=group] [role=button]:not(:has(svg))", 1], ["__wait__", 1000], ["[role=group] [role=button]:not(:has(svg))", 1]],
+	};
+
+	/**
+	 * OldTweetDeck参照Queryリスト一覧
+	 * @enum {Array<string|[string,number]>}
+	 */
+	const _OLD_TWEET_DECK_QUERY_LIST_DICT = {};
+
+	/**
+	 * 参照Queryリスト一覧
+	 * @enum {Array<string|[string,number]>}
+	 */
+	const EX_QUERY_LIST_DICT = new Proxy(_BASIC_QUERY_LIST_DICT, {
+		get(target, prop, receiver) {
+			if (useOldTweetDeck) {
+				let ret = _OLD_TWEET_DECK_QUERY_LIST_DICT[prop];
+				if (ret) return ret;
+			}
+			return target[prop];
+		},
+		set(target, prop, value, receiver) {
+			console.warn(`Cannot assign to read-only property: ${prop}`);
+			return false;
+		},
+	});
 
 	const VERIFY_SVG = `
     <svg class="${ELEM_NAME_DICT.VERIFY_CLASS}" viewBox="0 0 22 22" role="img" data-testid="icon-verified">
@@ -1129,6 +1207,17 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			value: "Reset",
 		},
 		// -------------------------
+		enableOldTweetDeckMode: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.tweetDeck,
+		},
+		autoLoadJQuery: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.tweetDeck,
+		},
+		// -------------------------
 		debug_viewSettingMenu: {
 			initData: false,
 			input: MENU_INPUT_TYPE.check,
@@ -1185,6 +1274,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
 	let levenshteinDistanceUseFlag = true;
 	let stopFlag = false;
+
+	let isPageOldTweetDeck = false;
+	let useOldTweetDeck = false;
 
 	// ページ変更確認に使用
 	let body_isReservation = false;
@@ -1258,7 +1350,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				return false;
 			}
 
-			let nameSpace_div = article.querySelectorAll(NAME_SPACE_QUERY);
+			let nameSpace_div = article.querySelectorAll(EX_QUERY_DICT.NAME_SPACE_QUERY);
 			nameSpace_div.forEach((div) => {
 				// 2回目以降はリツイート
 				if (this._nsOneLoadFlag) {
@@ -1266,7 +1358,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				}
 
 				// ユーザー名(id)取得
-				let name_span = div.querySelector(NAME_QUERY);
+				let name_span = div.querySelector(EX_QUERY_DICT.NAME_QUERY);
 				if (this._nsOneLoadFlag) {
 					this.reTweet._setName(name_span?.innerText);
 				} else {
@@ -1274,9 +1366,9 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				}
 
 				// id取得(ついでに認証マーク判定)
-				let id_span = div.querySelectorAll(ID_QUERY);
+				let id_span = div.querySelectorAll(EX_QUERY_DICT.ID_QUERY);
 				id_span.forEach((span) => {
-					let fc = span.querySelector(VERIFY_FORMALITY_QUERY);
+					let fc = span.querySelector(EX_QUERY_DICT.VERIFY_FORMALITY_QUERY);
 					if (fc != null) {
 						if (this._nsOneLoadFlag) {
 							this.reTweet.formality = true;
@@ -1284,7 +1376,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 							this.formality = true;
 						}
 					}
-					fc = span.querySelector(VERIFY_QUERY);
+					fc = span.querySelector(EX_QUERY_DICT.VERIFY_QUERY);
 					if (fc != null) {
 						if (this._nsOneLoadFlag) {
 							this.reTweet.verify = true;
@@ -1320,7 +1412,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				this._getMenu(article),
 			];
 
-			this._text_divs = article.querySelectorAll("div[lang]");
+			this._text_divs = article.querySelectorAll(EX_QUERY_DICT.TEXT_DIV_QUERY);
 			let text_div = this._text_divs?.[0];
 
 			let fullStr = "";
@@ -1329,17 +1421,29 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			if (text_div) {
 				let tmp;
 				text_div.childNodes.forEach((elem) => {
-					switch (elem.tagName) {
-						case "SPAN":
-							tmp = elem.innerText;
+					if (useOldTweetDeck) {
+						if (elem.nodeType === Node.TEXT_NODE) {
+							tmp = elem.nodeValue;
 							str += tmp;
 							fullStr += tmp;
-							break;
-						case "IMG":
+						} else if (elem.tagName === "IMG") {
 							tmp = elem.alt;
 							emojiLst.push(tmp);
 							fullStr += tmp;
-							break;
+						}
+					} else {
+						switch (elem.tagName) {
+							case "SPAN":
+								tmp = elem.innerText;
+								str += tmp;
+								fullStr += tmp;
+								break;
+							case "IMG":
+								tmp = elem.alt;
+								emojiLst.push(tmp);
+								fullStr += tmp;
+								break;
+						}
 					}
 				});
 			} else {
@@ -1358,7 +1462,12 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		 * @returns {HTMLElement}
 		 */
 		_getArticle() {
-			let article = this.card.firstChild?.firstChild?.firstChild;
+			let article;
+			if (useOldTweetDeck) {
+				article = this.card;
+			} else {
+				article = this.card.firstChild?.firstChild?.firstChild;
+			}
 			if (article?.tagName != "ARTICLE") {
 				return null;
 			}
@@ -1426,7 +1535,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			const this_ = this;
 			return new Promise((resolve) => {
 				setTimeout(() => {
-					let attach_img = article.querySelectorAll(IMAGE_QUERY);
+					let attach_img = article.querySelectorAll(EX_QUERY_DICT.IMAGE_QUERY);
 					//console.log(attach_img)
 					if (attach_img) {
 						for (let img of attach_img) {
@@ -1456,7 +1565,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			const this_ = this;
 			return new Promise((resolve) => {
 				setTimeout(() => {
-					let menuDOMs = article.querySelectorAll(MENU_BUTTON_QUERY);
+					let menuDOMs = article.querySelectorAll(EX_QUERY_DICT.MENU_BUTTON_QUERY);
 					if (menuDOMs.length >= 3) {
 						this_.menuDOM = menuDOMs[0];
 					}
@@ -1825,10 +1934,25 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			levenshteinDistanceUseFlag = false;
 		}
 
+		if (SETTING_LIST.enableOldTweetDeckMode.data && isPageOldTweetDeck) {
+			useOldTweetDeck = true;
+			document.body.classList.add(ELEM_NAME_DICT.USE_TWEET_DECK_CLASS);
+		}
+
 		card_init();
 		// 自動で設定画面を開く
 		if (SETTING_LIST.debug_viewSettingMenu.data) {
 			menuOpen();
+		}
+
+		if (useOldTweetDeck && SETTING_LIST.autoLoadJQuery.data && typeof $ === "undefined") {
+			let script = document.createElement("script");
+			script.type = "text/javascript";
+			script.onload = function () {
+				log("jQuery " + $.fn.jquery + " loaded successfully!");
+			};
+			script.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+			document.head.appendChild(script);
 		}
 	}
 
@@ -1855,6 +1979,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				stopFlag = true;
 				return;
 			}
+			isPageOldTweetDeck = isStatusType === "tweetdeck";
 			if (uid) {
 				uid = "@" + uid;
 				log(`親投稿者: ${uid}`);
@@ -1933,12 +2058,17 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	 * @returns {undefined}
 	 */
 	function menu_init() {
-		let w_exMenuDOM = document.createElement("div");
-		let advanceDOM = document.createElement("details");
-		let debugDOM = document.createElement("details");
+		const w_exMenuDOM = document.createElement("div");
+		const sub_details_list = {};
+		for (let k in MENU_GROUP_TYPE) {
+			const v = MENU_GROUP_TYPE[k];
+			if (v !== MENU_GROUP_TYPE.basic) {
+				const e = document.createElement("details");
+				sub_details_list[v] = e;
+				e.innerHTML = `<summary>${lang_dict[`menu_${v}`]}</summary>`;
+			}
+		}
 		w_exMenuDOM.innerHTML = lang_dict.menu_warn;
-		advanceDOM.innerHTML = lang_dict.menu_advanced;
-		debugDOM.innerHTML = lang_dict.menu_debug;
 		for (let key in SETTING_LIST) {
 			let item = SETTING_LIST[key];
 			// 入力欄作成
@@ -2019,23 +2149,20 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				div.appendChild(errDOM);
 			}
 
-			switch (item.group) {
-				case MENU_GROUP_TYPE.basic:
-					w_exMenuDOM.appendChild(div);
-					break;
-				case MENU_GROUP_TYPE.advanced:
-					advanceDOM.appendChild(div);
-					break;
-				case MENU_GROUP_TYPE.debug:
-					debugDOM.appendChild(div);
-					break;
-				default:
+			if (MENU_GROUP_TYPE.basic == item.group) {
+				w_exMenuDOM.appendChild(div);
+			} else {
+				let e = sub_details_list[item.group];
+				if (e) {
+					e.appendChild(div);
+				} else {
 					console.warn("存在しないグループ:", item.group);
-					break;
+				}
 			}
 		}
-		w_exMenuDOM.appendChild(advanceDOM);
-		w_exMenuDOM.appendChild(debugDOM);
+		for (let k in sub_details_list) {
+			w_exMenuDOM.appendChild(sub_details_list[k]);
+		}
 		// 画面右下のボタン系
 		{
 			let div = document.createElement("div");
@@ -2188,7 +2315,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	function card_init() {
 		log("初期化中...");
 
-		let tmp = document.querySelector(OBS_QUERY);
+		let tmp = document.querySelector(EX_QUERY_DICT.OBS_QUERY);
 		if (tmp && tmp.classList.contains(ELEM_NAME_DICT.PARENT_CLASS)) {
 			console.log("MutationObserverはすでに設定されています！");
 			return;
@@ -2197,11 +2324,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		existMoreTweet = false;
 
 		// 表示待機
-		waitForKeyElements(OBS_QUERY, function () {
+		waitForKeyElements(EX_QUERY_DICT.OBS_QUERY, function () {
 			// (投稿リストの)親を取得
-			parentDOM = document.querySelector(OBS_QUERY);
+			parentDOM = document.querySelector(EX_QUERY_DICT.OBS_QUERY);
 			if (parentDOM == null) {
-				log(`(${OBS_QUERY})が見つけれませんでした`);
+				log(`(${EX_QUERY_DICT.OBS_QUERY})が見つけれませんでした`);
 				return;
 			}
 			parentDOM.classList.add(ELEM_NAME_DICT.PARENT_CLASS);
@@ -2217,13 +2344,16 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 					}
 				});
 			});
-			parent_observer.observe(parentDOM, {
+			const observe_setting = {
 				childList: true,
-				//subtree: true,
-			});
+			};
+			if (useOldTweetDeck) {
+				observe_setting.subtree = true;
+			}
+			parent_observer.observe(parentDOM, observe_setting);
 
 			// 先頭部分が取得出来ていないので再実行
-			parentDOM.querySelectorAll(RE_QUERY).forEach((elem) => {
+			parentDOM.querySelectorAll(EX_QUERY_DICT.RE_QUERY).forEach((elem) => {
 				cardCheck(elem);
 			});
 		});
@@ -2235,6 +2365,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	 * @returns {undefined}
 	 */
 	function cardCheck(card_elem) {
+		if (useOldTweetDeck && !(card_elem instanceof HTMLElement)) {
+			return;
+		}
+
 		// 処理は1度のみ
 		const CHECK_CLASS = ELEM_NAME_DICT.CHECK_CLASS;
 		if (card_elem.classList.contains(CHECK_CLASS)) {
@@ -2389,9 +2523,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			return [FILTED_HIDDEN_ID.authenticatedAccount];
 		}
 		// 投稿言語の制限
-		for (let div of md._text_divs) {
-			if (!SETTING_LIST.allowLang.regexp.test(div.lang)) {
-				return [FILTED_HIDDEN_ID.unauthorizedLanguage, div.lang];
+		if (!useOldTweetDeck) {
+			for (let div of md._text_divs) {
+				if (!SETTING_LIST.allowLang.regexp.test(div.lang)) {
+					return [FILTED_HIDDEN_ID.unauthorizedLanguage, div.lang];
+				}
 			}
 		}
 
@@ -2518,7 +2654,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		}
 
 		let id = md.id;
-		if (msgDB_id.has(id)) {
+		if (!useOldTweetDeck && msgDB_id.has(id)) {
 			let bu = md.base_url;
 			// 連投検出
 			if (SETTING_LIST.maxContributtonCount.data > 0) {
@@ -2625,7 +2761,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 
 <label><input type="checkbox">${bstw}</label>
 `;
-			if (SETTING_LIST.visibleBlockButton.data) {
+			if (!useOldTweetDeck && SETTING_LIST.visibleBlockButton.data) {
 				let blockBtn = document.createElement("input");
 				blockBtn.type = "button";
 				blockBtn.value = "Block";
@@ -2634,7 +2770,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 					twitterMenuClicker(BLOCK_QUERY_LIST, md);
 				});
 			}
-			if (SETTING_LIST.visibleReportButton.data) {
+			if (!useOldTweetDeck && SETTING_LIST.visibleReportButton.data) {
 				let reportBtn = document.createElement("input");
 				reportBtn.type = "button";
 				reportBtn.value = "Report";
@@ -2649,7 +2785,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		if (ch) {
 			dbCommentBlock(md.id);
 
-			if (SETTING_LIST.autoBlock.data) {
+			if (!useOldTweetDeck && SETTING_LIST.autoBlock.data) {
 				console.log(`自動ブロック: ${md.name}(${md.id})
 理由: ${reason}`);
 

@@ -22,6 +22,8 @@ If it stops working, please report it to Issues and we will fix it.
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) is required.
 
+README Update Version: 1.13.9
+
 ### Reference image
 |![before](image/before.png)||
 |:---:|:---:|

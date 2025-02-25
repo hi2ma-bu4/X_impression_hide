@@ -23,6 +23,8 @@
 > <br>
 > [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)が必要です。
 
+README更新Ver: 2.1.3
+
 ### 参考画像
 |![before](image/before.png)||
 |:---:|:---:|
@@ -80,6 +82,8 @@ Tampermonkeyに追加するだけで使用できます。
 |【非推奨】自動ブロック|検出された対象を自動でブロックします[^6]。|false|boolean|
 |設定のリセット|設定項目をリセットします|||
 |検知済idのリセット|検知済idをリセットします。|||
+|OldTweetDeck対応|負荷軽減の為に分離[^6]|false|boolean|
+|jQuery自動読み込み|OldTweetDeckではなぜかjQueryが使用されているのにjQueryが読み込まれていない為、<br>jQueryが読み込まれていない場合にjQueryを読み込む機能です。|true|boolean|
 |起動時設定自動表示|設定画面を自動で開く|false|boolean|
 
 [^1]: 半角カタカナ、カタカナはひらがなに自動変換され、<br>全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます。
