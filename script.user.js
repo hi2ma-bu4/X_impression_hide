@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             2.1.3
+// @version             2.1.4
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -70,7 +70,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 	("use strict");
 
 	const PRO_NAME = "X_impression_hide";
-	const VERSION = "v2.1.3";
+	const VERSION = "v2.1.4";
 
 	// スマホ判定
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -94,7 +94,9 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 !# 謎投資話
 観察.*?毎日.*?銘柄.*?[万萬]円
-偶然.*?株.*?[万萬]円
+(偶然|指摘|ブロガー|トレーダー?|毎日|金融).*?(株|投資|銘柄|アドバイス).*?[万萬][円元]
+毎日.*?相場.*?予測.*?株式
+相場.*?85%
 
 !# chatGPT構文
 ですね!.+(です|ね)[!。]$
@@ -138,6 +140,13 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ^我希望以后可以不用再送我回家，而是我们一起回我们的家
 ^勇敢一点我们在.*就有故事
 ^只要你主动一点点我们就会有机会.*线下
+`;
+	// --------------------------------------------------
+	const BLACK_FULL_TEXT_REG = `!# 行頭が"!#"だとコメント
+
+!# 謎投資話
+@[a-z0-9_]{3,30}.*?(先生|観察|発見).*?(助け|共有)
+(金融|借金|最近興味).*?@[a-z0-9_]{3,30}.*?(金融|投資|アドバイス|株|[万萬][円元])
 `;
 	// --------------------------------------------------
 	const WHITE_TEXT_REG = `!# 同上
@@ -188,7 +197,7 @@ NFT|投資
 	const EXCLUDED_USERS = `!# 同上
 
 !# 例として製作者のidを指定
-@tromtub
+@hi2ma_bu4
 
 !# 災害(緊急)情報発信者を除外
 !# 表記抜けや、誤字はGithubのIssuesにご報告下さい。
@@ -278,6 +287,9 @@ NFT|投資
 		CHECK_CLASS: PRO_NAME + "_check",
 		HIDE_CLASS: PRO_NAME + "_none",
 		LOG_CLASS: PRO_NAME + "_log",
+		HIDE_TITLE_CLASS: PRO_NAME + "_title",
+		HIDE_TITLE_SHOW_CLASS: PRO_NAME + "_title_show",
+		HIDE_TITLE_BUBBLE_CLASS: PRO_NAME + "_title_bubble",
 		MORE_TWEET_CLASS: PRO_NAME + "_moreTweet",
 		VERIFY_CLASS: PRO_NAME + "_verify",
 		PC_FLAG_CLASS: PRO_NAME + "_pc",
@@ -353,6 +365,43 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
     justify-content: space-between;
 }
 
+.${ELEM_NAME_DICT.HIDE_TITLE_CLASS} {
+	position: relative;
+	display: inline-block;
+	cursor: help;
+}
+
+.${ELEM_NAME_DICT.HIDE_TITLE_BUBBLE_CLASS} {
+	position: absolute;
+	background-color: rgba(0, 0, 0, 0.85);
+	color: #fff;
+	padding: 0.3em 0.5em;
+	border-radius: 6px;
+	font-size: 0.8em;
+	white-space: nowrap;
+	word-break: keep-all;
+	overflow-wrap: break-word;
+	z-index: 100;
+	bottom: 125%;
+	left: 50%;
+	transform: translateX(-50%);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s;
+	max-width: 90vw;
+}
+
+.${ELEM_NAME_DICT.HIDE_TITLE_CLASS}.${ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS} .${ELEM_NAME_DICT.HIDE_TITLE_BUBBLE_CLASS} {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.${ELEM_NAME_DICT.LOG_CLASS} > span > a {
+	color: rgb(29, 155, 240);
+	margin-left: 0.25em;
+	text-decoration: underline;
+}
+
 .${ELEM_NAME_DICT.LOG_CLASS} input[type=checkbox] {
     display: none;
 }
@@ -398,6 +447,26 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 }
 #${EX_MENU_ID} input[type=text] {
     width: 95%;
+}
+
+#${EX_MENU_ID} input[type=text],
+#${EX_MENU_ID} input[type=number],
+#${EX_MENU_ID} textarea {
+    border: 1px solid #ccc;
+}
+
+#${EX_MENU_ID} input[type=button] {
+    background-color: #ffffffaa;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	color: #111133;
+	cursor: pointer;
+	margin: 0;
+	padding: 0.08em 0.2em;
+	transition: background 0.2s;
+}
+#${EX_MENU_ID} input[type=button]:hover {
+    background-color: rgba(29, 155, 240, .5);
 }
 
 #${EX_MENU_ID} input[type=checkbox] + span::after {
@@ -520,6 +589,7 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 		contributtonCount: 14,
 		rtContributtonCount: 15,
 		rtSharingSeries: 16,
+		fullCommentFilterDetection: 17,
 	};
 
 	// --------------------------------------------------
@@ -573,9 +643,14 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 企業バッジでも青バッジで表示されます。`,
 			menu_blackTextReg_name: "禁止する表現",
 			menu_blackTextReg_explanation: `非表示にするテキストを指定します。
+メンション・ハッシュタグ・シンボルタグ・URLなどのリンク、絵文字は判定に含まれません。
 記述方法は正規表現(/の間部分)で記述します。
 (半角カタカナ、カタカナはひらがなに自動変換されます)
 (全角英数字は半角英数字に、改行文字は半角スペースに自動変換されます)`,
+			menu_blackFullTextReg_name: "禁止する表現[拡張]",
+			menu_blackFullTextReg_explanation: `非表示にするテキストを指定します。
+メンション・ハッシュタグ・シンボルタグ・URLなどのリンク、絵文字を判定に含みます。
+指定方法などは[禁止する表現]と同じです。`,
 			menu_whiteTextReg_name: "許可する表現",
 			menu_whiteTextReg_explanation: `許可するテキストを指定します。
 一致する投稿は非表示の対象になりません。
@@ -598,8 +673,8 @@ idは完全一致のみ有効です。`,
 			menu_oneselfSubRetweetBlock_name: "サブ垢での自身の引用禁止",
 			menu_oneselfSubRetweetBlock_explanation: `サブ垢での自身を引用ツイートする投稿を非表示にします。
 ユーザー名から[サブ,2nd]などを除外しての一致検索です。`,
-			menu_oneselfSubRetweetBlock_name: "サブ垢定義用表現",
-			menu_oneselfSubRetweetBlock_explanation: `[サブ垢での自身の引用禁止]での除外文字を指定します。
+			menu_subDefinitionReg_name: "サブ垢定義用表現",
+			menu_subDefinitionReg_explanation: `[サブ垢での自身の引用禁止]での除外文字を指定します。
 1行ずつ評価していく為同時評価が必要な場合は「(aaa|bbb)」を使用して下さい。
 指定方法などは[禁止する表現]と同じです。`,
 			menu_emojiOnryBlock_name: "絵文字投稿禁止",
@@ -668,6 +743,10 @@ idは完全一致のみ有効です。`,
 			menu_autoBlock_explanation: `検出された対象を自動でブロックします。
 <span style="color: #f00">※この機能はbeta版です！！
 誤検知でも戸惑いなくブロックされます。</span>`,
+			menu_useRegModeDotAll_name: "dotAllモードの利用",
+			menu_useRegModeDotAll_explanation: `内部で使用する正規表現でdotAllモードを使用可能にします。
+<span style="color: #f00">この機能を無効にした場合、正規表現を記述するフィルターで改行を明示的に指定する必要があります。
+変更を行う前に、その影響について理解して変更して下さい。</span>(ES9)`,
 			menu_resetSetting_name: "設定のリセット",
 			menu_resetSetting_explanation: `設定項目をリセットします。
 (ページがリロードされます)
@@ -738,10 +817,15 @@ The screen will be peaceful, but the reasons for hiding the posts and the origin
 Corporate badges are also displayed as blue badges.`,
 			menu_blackTextReg_name: "Prohibited expressions",
 			menu_blackTextReg_explanation: `Specify the text to hide.
+Mentions, hashtags, symbol tags, URLs, and emojis are excluded from the evaluation.
 The description should be written using regular expressions (between the / characters).
 Half-width katakana and katakana will be automatically converted to hiragana.
 Full-width alphanumeric characters will be converted to half-width,
  and line breaks will be converted to spaces automatically.`,
+ 			menu_blackFullTextReg_name: "Prohibited expressions[Plus]",
+			menu_blackFullTextReg_explanation: `Specify the text to hide.
+Mentions, hashtags, symbol tags, URLs, and emojis are included in the evaluation.
+The specification method is the same as [Prohibited expressions].`,
 			menu_whiteTextReg_name: "Expressions allowed",
 			menu_whiteTextReg_explanation: `Specify the text to allow.
 Matching posts will not be hidden.
@@ -763,8 +847,8 @@ The description should be written using regular expressions (between the / chara
 			menu_oneselfRetweetBlock_explanation: `It hides posts that quote oneself.`,
 			menu_oneselfSubRetweetBlock_name: "Prohibition of quoting yourself in sub-text",
 			menu_oneselfSubRetweetBlock_explanation: `It hides posts that quote oneself.`,
-			menu_oneselfSubRetweetBlock_name: "Expression for sub-scale definition",
-			menu_oneselfSubRetweetBlock_explanation: `Specify the excluded characters for [Prohibit quoting yourself in sub-text].
+			menu_subDefinitionReg_name: "Expression for sub-scale definition",
+			menu_subDefinitionReg_explanation: `Specify the excluded characters for [Prohibit quoting yourself in sub-text].
 If you need simultaneous evaluation, use "(aaa|bbb)" as each line is evaluated one by one.
 The specification method is the same as [Prohibited expressions].`,
 			menu_emojiOnryBlock_name: "No emoji posting",
@@ -833,6 +917,10 @@ Please use it in conjunction with [Excluded User]. </span>`,
 			menu_autoBlock_explanation: `Automatically block detected targets.
 <span style="color: #f00">*This feature is in beta version! !
 Even false positives are blocked without hesitation.</span>`,
+			menu_useRegModeDotAll_name: "Using dotAll mode",
+			menu_useRegModeDotAll_explanation: `Enables the use of dotAll mode in regular expressions used internally.  
+<span style="color: #f00">If this feature is disabled, you will need to explicitly specify line breaks in filters that use regular expressions.  
+Please make sure you understand the implications before making changes.</span> (ES9)`,
 			menu_resetSetting_name: "Reset settings",
 			menu_resetSetting_explanation: `Reset the settings.
 (The page will be reloaded.)
@@ -1022,6 +1110,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			input: MENU_INPUT_TYPE.textarea,
 			group: MENU_GROUP_TYPE.basic,
 		},
+		blackFullTextReg: {
+			initData: BLACK_FULL_TEXT_REG,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.basic,
+		},
 		whiteTextReg: {
 			initData: WHITE_TEXT_REG,
 			input: MENU_INPUT_TYPE.textarea,
@@ -1196,6 +1289,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			input: MENU_INPUT_TYPE.check,
 			group: MENU_GROUP_TYPE.advanced,
 		},
+		useRegModeDotAll: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.advanced,
+		},
 		resetSetting: {
 			input: MENU_INPUT_TYPE.btn,
 			group: MENU_GROUP_TYPE.advanced,
@@ -1275,6 +1373,18 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	let levenshteinDistanceUseFlag = true;
 	let stopFlag = false;
 
+	/**
+	 * 正規表現で以下を使用するか
+	 * @enum {boolean}
+	 */
+	const useRegModeList = {
+		i: true, // ES1 : 大文字・小文字を区別しない
+		m: true, // ES3 : 複数行モード	(^ や $ が各行の先頭/末尾にマッチ)
+		u: true, // ES6 : Unicodeモード	(サロゲートペアを正しく処理)
+		s: true, // ES9 : dotAllモード	(. が改行 \n にもマッチするようになる)
+	};
+	let useRegMode = "";
+
 	let isPageOldTweetDeck = false;
 	let useOldTweetDeck = false;
 
@@ -1301,7 +1411,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		[/[’‘′´‛‵＇]/gu, "'"],
 	];
 	const reRegExpReg = /\\x([0-9a-fA-F]{2})|\\u([0-9a-fA-F]{4})|\\u\{([0-9a-fA-F]{1,6})\}/g;
-	const cleanNameReg = /\(\)\[\]\s/gu;
 	const CrLfReg = /[\r\n]/gu;
 	const spaceReg = / /g;
 
@@ -1311,6 +1420,21 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	// ==========================================================================================
 	// メッセージデータ保存 クラス
 	// ==========================================================================================
+	
+	/**
+	 * リンクデータ
+	 */
+	class LinkData {
+		/**
+		 * リンクデータ保存
+		 * @param {string} href 
+		 * @param {string} value 
+		 */
+		constructor(href, value) {
+			this.href = href;
+			this.value = value;
+		}
+	}
 
 	/**
 	 * メッセージデータ
@@ -1327,6 +1451,16 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			this.card = card;
 			this.verify = false;
 			this.formality = false;
+			/**
+			 * LinkDataを入れるオブジェクト
+			 * @type {{mention: LinkData[], hashtag: LinkData[], symboltag: LinkData[], url: LinkData[]}}
+			 */
+			this.has_link_dict = {
+				mention:[],
+				hashtag:[],
+				symboltag: [],
+				url:[],
+			}
 			this.attach_img = false;
 			this.attach_file_list = [];
 			/** @type {MessageData | null} */
@@ -1438,6 +1572,29 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 								str += tmp;
 								fullStr += tmp;
 								break;
+							case "DIV":
+								let a = elem.querySelector(`a[href]`);
+								tmp = a?.innerText;
+								if (!tmp || !tmp.length || !a.href.startsWith("http")){
+									break;
+								}
+								const hld = this.has_link_dict;
+								const ld = new LinkData(a.href, tmp);
+								switch (tmp.slice(0, 1)) {
+									case "@": // メンション
+										hld.mention.push(ld);
+										break;
+									case "#": // ハッシュタグ
+										hld.hashtag.push(ld);
+										break;
+									case "$": // シンボルタグ
+										hld.symboltag.push(ld);
+										break;
+									default:
+										hld.url.push(ld);
+								}
+								fullStr += ld.value;
+								break;
 							case "IMG":
 								tmp = elem.alt;
 								emojiLst.push(tmp);
@@ -1450,7 +1607,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				this._notTextDiv = true;
 			}
 
-			this.fullMessage = fullStr;
+			this._setFullMessage(fullStr);
 			this._setMessage(str);
 			this.emoji = emojiLst;
 
@@ -1504,6 +1661,17 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			this.message = message;
 			this.cleanMessage = normalize(message);
 			this.message_len = this.cleanMessage.length;
+		}
+		
+		/**
+		 * メッセージ設定
+		 * @param {string} full_message
+		 * @returns {undefined}
+		 */
+		_setFullMessage(full_message = "") {
+			this.fullMessage = full_message;
+			this.cleanFullMessage = normalize(full_message);
+			this.full_message_len = this.cleanFullMessage.length;
 		}
 
 		/**
@@ -1810,13 +1978,25 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			if (row.trim().length && !row.startsWith("!#")) {
 				let tmpReg = reRegExpStr(normalize(row, false));
 				try {
-					setting_data.regexp_list.push([new RegExp(tmpReg, "uim"), row]);
+					setting_data.regexp_list.push([new RegExp(tmpReg, useRegMode), row]);
 				} catch (e) {
 					console.error(`[${PRO_NAME}]`, tmpReg, e);
 					setting_data.isError = true;
 				}
 			}
 		});
+	}
+
+	function setRegMode(){
+		useRegModeList.s = SETTING_LIST.useRegModeDotAll.data;
+
+		let tmp = "";
+		for (key in useRegModeList) {
+			if (useRegModeList[key]){
+				tmp += key;
+			}
+		}
+		useRegMode = tmp;
 	}
 
 	/**
@@ -1855,6 +2035,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			}
 		}
 		lang_dict = LANGUAGE_DICT[SETTING_LIST.language.data ?? "ja"];
+		setRegMode();
 		log("設定読み込み...完了");
 
 		//検知id再取得
@@ -1878,6 +2059,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		{
 			// ブラック表現リスト
 			regRestoration("blackTextReg");
+			// ブラックフル表現リスト
+			regRestoration("blackFullTextReg");
 			// ホワイト表現リスト
 			regRestoration("whiteTextReg");
 			// ブラックRT表現リスト
@@ -1918,6 +2101,13 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		body_observer.observe(document.body, {
 			subtree: true,
 			childList: true,
+		});
+
+		document.addEventListener('click', () => {
+			const htsc = ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS;
+			for (elem of document.getElementsByClassName(htsc)) {
+				elem.classList.remove(htsc);
+			}
 		});
 
 		// カスタムcss設定
@@ -2128,6 +2318,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				name_elem.textContent = trans_name;
 				name_elem.classList.add(ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + "_name");
 				div.appendChild(name_elem);
+			} else if (trans_name == null) {
+				console.warn(`翻訳情報の欠落: ${MENU_LANG_KEY + key + MENU_LANG_KEY_NAME}`);
 			}
 			// 説明
 			const trans_explanation = lang_dict[MENU_LANG_KEY + key + MENU_LANG_KEY_EXPLANATION];
@@ -2135,6 +2327,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				let ex_elem = document.createElement("p");
 				ex_elem.innerHTML = trans_explanation.replace(/\n/g, "<br/>");
 				div.appendChild(ex_elem);
+			} else if (trans_name == null) {
+				console.warn(`翻訳情報の欠落: ${MENU_LANG_KEY + key + MENU_LANG_KEY_EXPLANATION}`);
 			}
 
 			div.appendChild(input_elem);
@@ -2419,19 +2613,23 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 						return;
 					case FILTED_HIDDEN_ID.commentFilterDetection:
 						// コメントフィルターに反応
-						hideComment(md, `<span title="comment_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+						hideComment(md, lang_dict.filterDetection, `comment_${lang_dict.filter}「/${ret[1]}/${useRegMode}」`);
+						return;
+					case FILTED_HIDDEN_ID.fullCommentFilterDetection:
+						// フルコメントフィルターに反応
+						hideComment(md, lang_dict.filterDetection, `full_comment_${lang_dict.filter}「/${ret[1]}/${useRegMode}」`);
 						return;
 					case FILTED_HIDDEN_ID.commentEmojiOnly:
 						// 絵文字のみ(スパム)
-						hideComment(md, `<span title="comment">${lang_dict.emojiOnly}</span>`);
+						hideComment(md, lang_dict.emojiOnly, "comment");
 						return;
 					case FILTED_HIDDEN_ID.textDuplication:
 						// コピペ
-						hideComment(md, `<span title="${lang_dict.similarity}:${((ret[1] * 10000) | 0) / 100}%">${lang_dict.textDuplication}</span>`);
+						hideComment(md, lang_dict.textDuplication, `${lang_dict.similarity}:${((ret[1] * 10000) | 0) / 100}%`);
 						return;
 					case FILTED_HIDDEN_ID.highUsage:
 						// 異常なハッシュタグの使用
-						hideComment(md, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.highUsage}</span>`);
+						hideComment(md, lang_dict.highUsage, `${lang_dict.usageCount}: ${ret[1]}`);
 						return;
 					case FILTED_HIDDEN_ID.selfCitation:
 						// 自分自身の引用
@@ -2439,11 +2637,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 						return;
 					case FILTED_HIDDEN_ID.nameFilterDetection:
 						// 名前フィルターに反応
-						hideComment(md, `<span title="name_${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.filterDetection}</span>`);
+						hideComment(md, lang_dict.filterDetection, `name_${lang_dict.filter}「/${ret[1]}/${useRegMode}」`);
 						return;
 					case FILTED_HIDDEN_ID.nameEmojiOnly:
 						// 名前が絵文字のみ
-						hideComment(md, `<span title="name">${lang_dict.emojiOnly}</span>`);
+						hideComment(md, lang_dict.emojiOnly, "name");
 						return;
 					case FILTED_HIDDEN_ID.verifyRtBlock:
 						// 認証済アカウントをRTするな
@@ -2451,7 +2649,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 						return;
 					case FILTED_HIDDEN_ID.symbolUsage:
 						// 異常なシンボルタグの使用
-						hideComment(md, `<span title="${lang_dict.usageCount}: ${ret[1]}">${lang_dict.symbolUsage}</span>`);
+						hideComment(md, lang_dict.symbolUsage, `${lang_dict.usageCount}: ${ret[1]}`);
 						return;
 					case FILTED_HIDDEN_ID.detectedElsewhere:
 						// 他で検出済
@@ -2463,11 +2661,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 						return;
 					case FILTED_HIDDEN_ID.unauthorizedLanguage:
 						// 投稿言語の制限
-						hideComment(md, `<span title="${ret[1]}">${lang_dict.unauthorizedLanguage}</span>`);
+						hideComment(md, lang_dict.unauthorizedLanguage, `${ret[1]}`);
 						return;
 					case FILTED_HIDDEN_ID.selfCitationSub:
 						// サブ垢で己をRTすんな
-						hideComment(md, `<span title="${lang_dict.filter}「/${ret[1]}/uim」">${lang_dict.selfCitationSub}</span>`);
+						hideComment(md, lang_dict.selfCitationSub, `${lang_dict.filter}「/${ret[1]}/${useRegMode}」`);
 						return;
 					case FILTED_HIDDEN_ID.contributtonCount:
 						// 連投検出
@@ -2543,14 +2741,14 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			}
 			//サブ垢判定
 			if (SETTING_LIST.oneselfSubRetweetBlock) {
-				for (let reg of subDefinitionList_reg) {
+				for (let reg of SETTING_LIST.subDefinitionReg.regexp_list) {
 					if (md.cleanName.replace(reg[0], "") == md.reTweet.cleanName.replace(reg[0], "")) {
 						return [FILTED_HIDDEN_ID.selfCitationSub, reg[1]];
 					}
 				}
 			}
 		}
-		let message = md.cleanMessage;
+		const message = md.cleanMessage;
 		if (SETTING_LIST.emojiOnryBlock.data && !message.replace(spaceReg, "").length && !md.attach_img) {
 			return [FILTED_HIDDEN_ID.commentEmojiOnly];
 		}
@@ -2571,7 +2769,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			}
 			//サブ垢判定
 			if (SETTING_LIST.oneselfSubRetweetBlock) {
-				for (let reg of subDefinitionList_reg) {
+				for (let reg of SETTING_LIST.subDefinitionReg.regexp_list) {
 					if (md.cleanName.replace(reg[0], "") == md.reTweet.cleanName.replace(reg[0], "")) {
 						return [FILTED_HIDDEN_ID.selfCitationSub, reg[1]];
 					}
@@ -2585,8 +2783,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				return [FILTED_HIDDEN_ID.commentFilterDetection, reg[1]];
 			}
 		}
+		// フルコメントフィルターによる検出
+		const full_message = md.cleanFullMessage;
+		for (let reg of SETTING_LIST.blackFullTextReg.regexp_list) {
+			if (reg[0].test(full_message)) {
+				return [FILTED_HIDDEN_ID.fullCommentFilterDetection, reg[1]];
+			}
+		}
 		// 名前フィルターによる検出
-		let username = md.cleanName;
+		const username = md.cleanName;
 		for (let reg of SETTING_LIST.blackNameReg.regexp_list) {
 			if (reg[0].test(username)) {
 				return [FILTED_HIDDEN_ID.nameFilterDetection, reg[1]];
@@ -2723,7 +2928,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	 * @param {boolean} [ch=true] - 2重参照回避
 	 * @returns {undefined}
 	 */
-	function hideComment(md, reason, ch = true) {
+	function hideComment(md, reason, title="", ch = true) {
 		// TLTW以外では大人しく
 		if (stopFlag) {
 			addDB(md);
@@ -2757,12 +2962,60 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			}
 
 			div.innerHTML = /* html */ `
-<span>[${reason}] <a href="/${md.id.slice(1)}" title="${md.id}">${md.name}</a> ${isVerify}</span>
+<span><a href="/${md.id.slice(1)}" title="${md.id}">${md.name}</a> ${isVerify}</span>
 
 <label><input type="checkbox">${bstw}</label>
 `;
+			{
+				const titleSpan = document.createElement("span");
+				titleSpan.title = title;
+				titleSpan.classList.add(ELEM_NAME_DICT.HIDE_TITLE_CLASS);
+				titleSpan.textContent = `[${reason}]`;
+				div.firstElementChild.prepend(titleSpan);
+
+				const bubble = document.createElement('div');
+				bubble.classList.add(ELEM_NAME_DICT.HIDE_TITLE_BUBBLE_CLASS);
+				bubble.textContent = title;
+				titleSpan.appendChild(bubble);
+
+				const parentDiv = document.getElementsByClassName(ELEM_NAME_DICT.PARENT_CLASS)[0];
+				const parentDivRect = parentDiv.getBoundingClientRect()
+
+				function toggleTooltip(titleSpan, bubble) {
+					titleSpan.classList.toggle(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS);
+			
+					const bs = bubble.style;
+					if (titleSpan.classList.contains(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS)) {
+						// 画面端にはみ出ていないかチェックして位置調整
+						const bubbleRect = bubble.getBoundingClientRect();
+						const padding = 5;
+			
+						if (bubbleRect.left - parentDivRect.left < padding) {
+							bs.left = `${padding}px`;
+							bs.transform = "translateX(0)";
+						} else if (bubbleRect.right - parentDivRect.right > parentDiv.innerWidth - padding) {
+							bs.left = "auto";
+							bs.right = `${padding}px`;
+							bs.transform = "translateX(0)";
+						} else {
+							bs.left = "50%";
+							bs.right = "auto";
+							bs.transform = "translateX(-50%)";
+						}
+					} else {
+						bs.left = "";
+						bs.right = "";
+						bs.transform = "";
+					}
+				}
+
+				titleSpan.addEventListener('click', (e) => {
+					e.stopPropagation();
+					toggleTooltip(titleSpan, bubble);
+				});
+			}
 			if (!useOldTweetDeck && SETTING_LIST.visibleBlockButton.data) {
-				let blockBtn = document.createElement("input");
+				const blockBtn = document.createElement("input");
 				blockBtn.type = "button";
 				blockBtn.value = "Block";
 				div.firstElementChild.appendChild(blockBtn);
@@ -2771,7 +3024,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				});
 			}
 			if (!useOldTweetDeck && SETTING_LIST.visibleReportButton.data) {
-				let reportBtn = document.createElement("input");
+				const reportBtn = document.createElement("input");
 				reportBtn.type = "button";
 				reportBtn.value = "Report";
 				div.firstElementChild.appendChild(reportBtn);
@@ -2883,7 +3136,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				if (md?.id == id) {
 					msgDB.splice(i, 1);
 					if (md.base_url == oldUrl) {
-						hideComment(md, lang_dict.recursiveDetection, false);
+						hideComment(md, lang_dict.recursiveDetection, null, false);
 					}
 				}
 			}
