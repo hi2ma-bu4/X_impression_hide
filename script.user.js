@@ -5,7 +5,7 @@
 // @name:zh-CN          使用 "display:none;" 隐藏 Twitter（曾用名: 𝕏）的印象收益骗子。
 // @name:zh-TW          使用 "display:none;" 隱藏 Twitter（曾用名: 𝕏）的印象詐騙者。
 // @namespace           https://github.com/hi2ma-bu4
-// @version             2.1.4
+// @version             2.1.5
 // @description         Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:ja      Twitterのインプレゾンビを非表示にしたりブロック・通報するツールです。
 // @description:en      A tool to hide, block, and report spam on Twitter.
@@ -50,6 +50,11 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 
 */
 /* todo
+・URLフィルター作成
+・プロフィールメッセージフィルター作成
+・画像リンク取得などを高速に
+・gifをブロック
+
 ・検知率を上げる
     ・あやしい日本語の検知(多分自分の実力じゃ無理)
     ・フィルターをもっと有能に
@@ -58,10 +63,8 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 ・whitelist_filterの実装
     ・名前
 ・他人の引用ツイートテキストフィルターを作成
-・プロフィールメッセージフィルターを作成
 ・menuのresize:both;を左下に
 ・menuをもっと見やすく(たすけて)
-・gifをブロック
 ・正規表現などの最適化
 ・軽量化
 */
@@ -70,7 +73,7 @@ Twitter(旧:𝕏)のインプレッション小遣い稼ぎ野郎どもをdispla
 	("use strict");
 
 	const PRO_NAME = "X_impression_hide";
-	const VERSION = "v2.1.4";
+	const VERSION = "v2.1.5";
 
 	// スマホ判定
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -272,6 +275,17 @@ NFT|投資
 !# それっぽいのをまとめとく
 ((season|シーズン).{0,2}(\\d{1,2}|[IVX]{1,5})|サブ|ファースト|セカンド|サード|新・?|ファイナル|(\\d{1,4}|[一二三四五六七八九十百千万壱弐参肆伍陸漆捌玖拾陌阡萬廿丗卅世]+)代目|sub|first|1st|second|2nd|third|3rd|fourth|4th|new|final)
 `;
+	// --------------------------------------------------
+	const PLAT_FORM_BLACK_REG = `!# 同上
+
+!# 例:
+!# Twitter for Android
+!# Twitter for iPhone
+!# Twitter Web App
+
+!# 広告などの投稿元
+Twitter for Advertisers
+`;
 
 	// ==========================================================================================
 	// 要素命名用 定数
@@ -451,7 +465,8 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 
 #${EX_MENU_ID} input[type=text],
 #${EX_MENU_ID} input[type=number],
-#${EX_MENU_ID} textarea {
+#${EX_MENU_ID} textarea,
+#${EX_MENU_ID} select {
     border: 1px solid #ccc;
 }
 
@@ -469,16 +484,16 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
     background-color: rgba(29, 155, 240, .5);
 }
 
-#${EX_MENU_ID} input[type=checkbox] + span::after {
+#${EX_MENU_ID} input[type=checkbox] + label::after {
     content: "Invalid";
 }
-#${EX_MENU_ID} input[type=checkbox]:checked + span::after {
+#${EX_MENU_ID} input[type=checkbox]:checked + label::after {
     content: "Validity";
 }
-#${EX_MENU_ID}[lang=ja] input[type=checkbox] + span::after {
+#${EX_MENU_ID}[lang=ja] input[type=checkbox] + label::after {
     content: "無効";
 }
-#${EX_MENU_ID}[lang=ja] input[type=checkbox]:checked + span::after {
+#${EX_MENU_ID}[lang=ja] input[type=checkbox]:checked + label::after {
     content: "有効";
 }
 
@@ -557,6 +572,7 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 	 */
 	const MENU_GROUP_TYPE = {
 		basic: "basic",
+		internalRef : "internalRef",
 		advanced: "advanced",
 		tweetDeck: "tweetDeck",
 		debug: "debug",
@@ -590,6 +606,7 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 		rtContributtonCount: 15,
 		rtSharingSeries: 16,
 		fullCommentFilterDetection: 17,
+		platformFilterDetection: 18,
 	};
 
 	// --------------------------------------------------
@@ -622,6 +639,7 @@ body:not(.${ELEM_NAME_DICT.USE_TWEET_DECK_CLASS}) .${ELEM_NAME_DICT.HIDE_CLASS}:
 <small>現在のバージョン: ${VERSION}</small><br>
 <small style="color:#d00">変更の保存をした場合、ページを更新してください。</small><br>
 <small>使い方の説明は<a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">こちら</a>から</small>`,
+			menu_internalRef: "追加参照機能",
 			menu_advanced: "高度な設定",
 			menu_tweetDeck: "OldTweetDeck",
 			menu_debug: "デバッグ",
@@ -728,6 +746,16 @@ idは完全一致のみ有効です。`,
 値が小さいほど処理は軽くなりますが、検知率が減ります。`,
 			menu_language_name: "言語",
 			menu_language_explanation: `表示言語を設定します。`,
+			menu_useTwitterInternalData_name: "Twitter内部データ使用",
+			menu_useTwitterInternalData_explanation: `ユーザーと同じ画面(DOM)からのデータ取得ではなく、
+内部で使用されているオブジェクトを処理に流用します。
+<span style="color: #f00">Twitterのアップデートで動作しなくなる可能性があります。</span>
+取得に失敗した場合既存の取得方法が代替で使用されます。
+OldTweetDeckでは無効です。`,
+			menu_platformBlackReg_name: "禁止するプラットフォーム",
+			menu_platformBlackReg_explanation: `「Twitter Web App」などの投稿環境で判定します。
+指定方法などは[禁止する表現]と同じです。
+[Twitter内部データ使用]が無効の場合、動作しません。`,
 			menu_customCss_name: "ページ適用css設定",
 			menu_customCss_explanation: `ページへ適用するcssを指定します。`,
 			menu_bodyObsTimeout_name: "ページ更新検知用処理待機時間(ms)",
@@ -765,6 +793,10 @@ idは完全一致のみ有効です。`,
 jQueryが読み込まれていない場合にjQueryを読み込む機能です。`,
 			menu_debug_viewSettingMenu_name: "起動時設定自動表示",
 			menu_debug_viewSettingMenu_explanation: `設定画面を自動で開く`,
+			menu_debug_visibleCardDebugButton_name: "クイックデバッグ表示",
+			menu_debug_visibleCardDebugButton_explanation: `1クリックでコンソールに該当MsgDataを出力できるボタンを表示します。
+検出された投稿にしか表示されません。
+<span style="font-size: 0.7em">検出された投稿は軽量化のためMsgDataを破棄するのでこの参照が最後の記録</span>`,
 			menu_debug_viewBlacklist_name: "blacklist表示",
 			menu_debug_viewBlacklist_explanation: `現在のblacklist_idをconsoleに出力する。`,
 			menu_debug_viewMsgDB_name: "MsgDB表示",
@@ -788,6 +820,7 @@ jQueryが読み込まれていない場合にjQueryを読み込む機能です�
 			symbolUsage: "$多量使用",
 			selfCitation: "自身の引用",
 			selfCitationSub: "自身を引用?",
+			platformFilterDetection: "投稿元規制",
 			recursiveDetection: "再帰的検出",
 		},
 		en: {
@@ -796,6 +829,7 @@ jQueryが読み込まれていない場合にjQueryを読み込む機能です�
 <small>Current version: ${VERSION}</small><br>
 <small style="color:#d00">If you have saved the changes, please refresh the page.</small><br>
 <small>You can find the usage instructions <a href="https://github.com/hi2ma-bu4/X_impression_hide" target="_blank" rel="noopener noreferrer">here</a></small>`,
+			menu_internalRef: "Additional Reference",
 			menu_advanced: "Advanced settings",
 			menu_tweetDeck: "OldTweetDeck",
 			menu_debug: "Debug",
@@ -902,6 +936,15 @@ If it is larger than the [Maximum text size for comparison], the comparison proc
 A smaller value reduces the processing load but also decreases the detection rate.`,
 			menu_language_name: "Language",
 			menu_language_explanation: `Set the display language.`,
+			menu_useTwitterInternalData_name: "Use of Twitter internal data",
+			menu_useTwitterInternalData_explanation: `Instead of retrieving data from the same screen (DOM) as the user, this feature reuses internal objects used by Twitter.
+<span style="color: #f00">This may stop working if Twitter updates their platform.</span>
+If data retrieval fails, the existing method will be used as a fallback.
+This is not supported on OldTweetDeck.`,
+			menu_platformBlackReg_name: "Disallowed platforms",
+			menu_platformBlackReg_explanation: `Posts are identified based on the source client, like "Twitter Web App".
+The specification method is the same as [Prohibited expressions].
+Does not work if [Use of Twitter internal data] is disabled.`,
 			menu_customCss_name: "Page-specific CSS settings",
 			menu_customCss_explanation: `Specify the CSS to apply to the page.`,
 			menu_bodyObsTimeout_name: "Processing wait time (in milliseconds) for page update detection",
@@ -961,6 +1004,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			symbolUsage: "$HighUsage",
 			selfCitation: "SelfCitation",
 			selfCitationSub: "selfCitationSub",
+			platformFilterDetection: "PlatformRestriction",
 			recursiveDetection: "RecursiveDetection",
 		},
 	};
@@ -1267,6 +1311,17 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			select: SETTING_LANG_SELECT,
 		},
 		// -------------------------
+		useTwitterInternalData: {
+			initData: true,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.internalRef,
+		},
+		platformBlackReg: {
+			initData: PLAT_FORM_BLACK_REG,
+			input: MENU_INPUT_TYPE.textarea,
+			group: MENU_GROUP_TYPE.internalRef,
+		},
+		// -------------------------
 		customCss: {
 			initData: CUSTOM_CSS,
 			input: MENU_INPUT_TYPE.textarea,
@@ -1321,6 +1376,11 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			input: MENU_INPUT_TYPE.check,
 			group: MENU_GROUP_TYPE.debug,
 		},
+		debug_visibleCardDebugButton: {
+			initData: false,
+			input: MENU_INPUT_TYPE.check,
+			group: MENU_GROUP_TYPE.debug,
+		},
 		debug_viewBlacklist: {
 			input: MENU_INPUT_TYPE.btn,
 			group: MENU_GROUP_TYPE.debug,
@@ -1370,7 +1430,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	/** @type {Set<string>} */
 	const excludedUsersSet = new Set();
 
+	// 類似文字列検索使用フラグ
 	let levenshteinDistanceUseFlag = true;
+	let internalDataRefFlag = true;
+	// ページ読み込み停止フラグ
 	let stopFlag = false;
 
 	/**
@@ -1385,6 +1448,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 	};
 	let useRegMode = "";
 
+	// OldTweetDeck関連
 	let isPageOldTweetDeck = false;
 	let useOldTweetDeck = false;
 
@@ -1491,12 +1555,28 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 					this._addReTweet();
 				}
 
+				if (internalDataRefFlag) {
+					try {
+						const toolbar = this.card.querySelector(`div[id][aria-label][role="group"]`);
+						const pr_list = Object.getOwnPropertyNames(toolbar);
+						const pr_name = pr_list.find((input)=>input.includes('__reactProps$'));
+						const data = toolbar[pr_name];
+						this.internalData = data?.children[1]?.props?.retweetWithCommentLink?.state?.quotedStatus;
+					} catch (e){
+						console.warn(`内部データ取得失敗`);
+					}
+				}
+
 				// ユーザー名(id)取得
 				let name_span = div.querySelector(EX_QUERY_DICT.NAME_QUERY);
 				if (this._nsOneLoadFlag) {
 					this.reTweet._setName(name_span?.innerText);
 				} else {
 					this._setName(name_span?.innerText);
+					// フルネーム取得
+					if (this.internalData){
+						this.fullName = this.internalData.user.name;
+					}
 				}
 
 				// id取得(ついでに認証マーク判定)
@@ -1987,6 +2067,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		});
 	}
 
+	/**
+	 * 正規表現使用モード設定
+	 * @returns {undefined}
+	 */
 	function setRegMode(){
 		useRegModeList.s = SETTING_LIST.useRegModeDotAll.data;
 
@@ -2069,6 +2153,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			regRestoration("blackNameReg");
 			// サブ垢定義用表現リスト
 			regRestoration("subDefinitionReg");
+			// プラットフォーム表現リスト
+			regRestoration("platformBlackReg");
 
 			// 除外idリスト
 			let spText = SETTING_LIST.excludedUsers.data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
@@ -2123,11 +2209,16 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		if (!SETTING_LIST.maxSaveTextSize.data || SETTING_LIST.maxSaveTextSize.data < SETTING_LIST.minSaveTextSize.data) {
 			levenshteinDistanceUseFlag = false;
 		}
-
+		// OldTweetDeckを使用するか
 		if (SETTING_LIST.enableOldTweetDeckMode.data && isPageOldTweetDeck) {
 			useOldTweetDeck = true;
 			document.body.classList.add(ELEM_NAME_DICT.USE_TWEET_DECK_CLASS);
 		}
+		//
+		if(!SETTING_LIST.useTwitterInternalData.data || useOldTweetDeck){
+			internalDataRefFlag = false;
+		}
+
 
 		card_init();
 		// 自動で設定画面を開く
@@ -2265,6 +2356,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 			let inputType = item?.input ?? "";
 			let input_elem = document.createElement("input");
 			input_elem.type = inputType;
+			input_elem.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + key;
 			let add_elem = null;
 			switch (inputType) {
 				case MENU_INPUT_TYPE.text:
@@ -2284,7 +2376,8 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 					break;
 				case MENU_INPUT_TYPE.check:
 					input_elem.checked = item?.data ?? false;
-					add_elem = document.createElement("span");
+					add_elem = document.createElement("label");
+					add_elem.htmlFor = input_elem.id;
 					break;
 				case MENU_INPUT_TYPE.btn:
 					input_elem.value = item.value;
@@ -2307,7 +2400,6 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 					console.warn("対応していない形式", item);
 					continue;
 			}
-			input_elem.id = ELEM_NAME_DICT.EX_MENU_ITEM_BASE_ID + key;
 
 			// 項目を囲うdiv
 			let div = document.createElement("div");
@@ -2681,6 +2773,10 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 							hideComment(msgData, lang_dict.rtSharingSeries);
 						}
 						return;
+					case FILTED_HIDDEN_ID.platformFilterDetection:
+						// プラットフォームフィルター検出
+						hideComment(md, lang_dict.platformFilterDetection, `platform_${lang_dict.filter}「/${ret[1]}/${useRegMode}」`)
+						return;
 				}
 			})
 			.catch(console.warn);
@@ -2719,6 +2815,15 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 		// 認証済アカウント強制ブロック
 		if (SETTING_LIST.verifyBlock.data && md.verify) {
 			return [FILTED_HIDDEN_ID.authenticatedAccount];
+		}
+		// 投稿プラットフォームフィルター
+		if (internalDataRefFlag && md.internalData?.source_name) {
+			const source_name = normalize(md.internalData.source_name);
+			for (let reg of SETTING_LIST.platformBlackReg.regexp_list) {
+				if (reg[0].test(source_name)) {
+					return [FILTED_HIDDEN_ID.platformFilterDetection, reg[1]];
+				}
+			}
 		}
 		// 投稿言語の制限
 		if (!useOldTweetDeck) {
@@ -2961,76 +3066,97 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				isVerify = VERIFY_SVG;
 			}
 
+			// フルネームが取得できたならそれを使用
+			let name = md.name;
+			if(md.fullName){
+				name = md.fullName;
+			}
+
 			div.innerHTML = /* html */ `
-<span><a href="/${md.id.slice(1)}" title="${md.id}">${md.name}</a> ${isVerify}</span>
+<span><a href="/${md.id.slice(1)}" title="${md.id}">${name}</a> ${isVerify}</span>
 
 <label><input type="checkbox">${bstw}</label>
 `;
 			{
 				const titleSpan = document.createElement("span");
-				titleSpan.title = title;
 				titleSpan.classList.add(ELEM_NAME_DICT.HIDE_TITLE_CLASS);
 				titleSpan.textContent = `[${reason}]`;
 				div.firstElementChild.prepend(titleSpan);
 
-				const bubble = document.createElement('div');
-				bubble.classList.add(ELEM_NAME_DICT.HIDE_TITLE_BUBBLE_CLASS);
-				bubble.textContent = title;
-				titleSpan.appendChild(bubble);
+				if(title){
+					titleSpan.title = title;
 
-				const parentDiv = document.getElementsByClassName(ELEM_NAME_DICT.PARENT_CLASS)[0];
-				const parentDivRect = parentDiv.getBoundingClientRect()
+					const bubble = document.createElement('div');
+					bubble.classList.add(ELEM_NAME_DICT.HIDE_TITLE_BUBBLE_CLASS);
+					bubble.textContent = title;
+					titleSpan.appendChild(bubble);
 
-				function toggleTooltip(titleSpan, bubble) {
-					titleSpan.classList.toggle(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS);
-			
-					const bs = bubble.style;
-					if (titleSpan.classList.contains(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS)) {
-						// 画面端にはみ出ていないかチェックして位置調整
-						const bubbleRect = bubble.getBoundingClientRect();
-						const padding = 5;
-			
-						if (bubbleRect.left - parentDivRect.left < padding) {
-							bs.left = `${padding}px`;
-							bs.transform = "translateX(0)";
-						} else if (bubbleRect.right - parentDivRect.right > parentDiv.innerWidth - padding) {
-							bs.left = "auto";
-							bs.right = `${padding}px`;
-							bs.transform = "translateX(0)";
+					const parentDiv = document.getElementsByClassName(ELEM_NAME_DICT.PARENT_CLASS)[0];
+					const parentDivRect = parentDiv.getBoundingClientRect()
+
+					function toggleTooltip(titleSpan, bubble) {
+						titleSpan.classList.toggle(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS);
+				
+						const bs = bubble.style;
+						if (titleSpan.classList.contains(ELEM_NAME_DICT.HIDE_TITLE_SHOW_CLASS)) {
+							// 画面端にはみ出ていないかチェックして位置調整
+							const bubbleRect = bubble.getBoundingClientRect();
+							const padding = 5;
+				
+							if (bubbleRect.left - parentDivRect.left < padding) {
+								bs.left = `${padding}px`;
+								bs.transform = "translateX(0)";
+							} else if (bubbleRect.right - parentDivRect.right > parentDiv.innerWidth - padding) {
+								bs.left = "auto";
+								bs.right = `${padding}px`;
+								bs.transform = "translateX(0)";
+							} else {
+								bs.left = "50%";
+								bs.right = "auto";
+								bs.transform = "translateX(-50%)";
+							}
 						} else {
-							bs.left = "50%";
-							bs.right = "auto";
-							bs.transform = "translateX(-50%)";
+							bs.left = "";
+							bs.right = "";
+							bs.transform = "";
 						}
-					} else {
-						bs.left = "";
-						bs.right = "";
-						bs.transform = "";
 					}
-				}
 
-				titleSpan.addEventListener('click', (e) => {
-					e.stopPropagation();
-					toggleTooltip(titleSpan, bubble);
-				});
+					titleSpan.addEventListener('click', (e) => {
+						e.stopPropagation();
+						toggleTooltip(titleSpan, bubble);
+					});
+				}
 			}
-			if (!useOldTweetDeck && SETTING_LIST.visibleBlockButton.data) {
-				const blockBtn = document.createElement("input");
-				blockBtn.type = "button";
-				blockBtn.value = "Block";
-				div.firstElementChild.appendChild(blockBtn);
-				blockBtn.addEventListener("click", function () {
-					twitterMenuClicker(BLOCK_QUERY_LIST, md);
-				});
-			}
-			if (!useOldTweetDeck && SETTING_LIST.visibleReportButton.data) {
-				const reportBtn = document.createElement("input");
-				reportBtn.type = "button";
-				reportBtn.value = "Report";
-				div.firstElementChild.appendChild(reportBtn);
-				reportBtn.addEventListener("click", function () {
-					twitterMenuClicker(REPORT_QUERY_LIST, md);
-				});
+			if (!useOldTweetDeck){
+				if (SETTING_LIST.visibleBlockButton.data) {
+					const blockBtn = document.createElement("input");
+					blockBtn.type = "button";
+					blockBtn.value = "Block";
+					div.firstElementChild.appendChild(blockBtn);
+					blockBtn.addEventListener("click", function () {
+						twitterMenuClicker(EX_QUERY_LIST_DICT.BLOCK_QUERY_LIST, md);
+					});
+				}
+				if (SETTING_LIST.visibleReportButton.data) {
+					const reportBtn = document.createElement("input");
+					reportBtn.type = "button";
+					reportBtn.value = "Report";
+					div.firstElementChild.appendChild(reportBtn);
+					reportBtn.addEventListener("click", function () {
+						twitterMenuClicker(EX_QUERY_LIST_DICT.REPORT_QUERY_LIST, md);
+					});
+				}
+				// デバッグ
+				if (SETTING_LIST.debug_visibleCardDebugButton.data) {
+					const devBtn = document.createElement("input");
+					devBtn.type = "button";
+					devBtn.value = "dev";
+					div.firstElementChild.appendChild(devBtn);
+					devBtn.addEventListener("click", function () {
+						console.log(md);
+					});
+				}
 			}
 			md.card.prepend(div);
 		}
@@ -3042,7 +3168,7 @@ Used when [Processing wait time (in milliseconds) for page update detection] is 
 				console.log(`自動ブロック: ${md.name}(${md.id})
 理由: ${reason}`);
 
-				twitterMenuClicker(BLOCK_QUERY_LIST, md);
+				twitterMenuClicker(EX_QUERY_LIST_DICT.BLOCK_QUERY_LIST, md);
 			}
 
 			// 検知済id保存
